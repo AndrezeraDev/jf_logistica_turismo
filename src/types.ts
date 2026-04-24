@@ -1,0 +1,60 @@
+export interface LatLng {
+  lat: number;
+  lng: number;
+}
+
+export interface Hotel {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  address?: string;
+  guests: number;
+}
+
+export interface Vehicle {
+  id: string;
+  name: string;
+  type: 'carro' | 'van' | 'micro-onibus' | 'onibus' | 'outro';
+  capacity: number;
+}
+
+export interface City {
+  displayName: string;
+  lat: number;
+  lng: number;
+  boundingBox: [number, number, number, number]; // [south, north, west, east]
+}
+
+export interface RouteStop {
+  hotelId: string;
+  name: string;
+  lat: number;
+  lng: number;
+  guests: number;
+  order: number;
+}
+
+export interface Route {
+  origin: LatLng;
+  stops: RouteStop[];
+  returnStops: RouteStop[];
+  polyline: LatLng[]; // pickup leg
+  returnPolyline: LatLng[]; // return leg
+  totalDistanceKm: number;
+  totalDurationMin: number;
+  totalGuests: number;
+  suggestedVehicleId?: string;
+  aiSuggestion?: string;
+  usedFallback?: boolean; // true = OSRM falhou, traçado é em linha reta
+  routingEngine?: string; // host do OSRM que respondeu
+}
+
+export interface Settings {
+  openaiApiKey?: string;
+  openaiModel?: string;
+  orsApiKey?: string; // OpenRouteService
+  origin?: LatLng & { label?: string };
+  searchRadiusKm?: number;
+  showRadiusCircle?: boolean;
+}
