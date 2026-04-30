@@ -290,7 +290,8 @@ export function MapView({
     //  3) Follow mode normal → panTo suave (mantém zoom atual)
     //  Importante: só UMA das três deve disparar por update — flyTo e panTo se cancelam.
     if (requestZoomOnNextLocation) {
-      const targetZoom = Math.max(map.getZoom(), 16);
+      // Zoom 13 = nível cidade (cabe a maioria das cidades brasileiras na tela)
+      const targetZoom = Math.max(map.getZoom(), 13);
       map.flyTo(latLng, targetZoom, { duration: 1.6, easeLinearity: 0.2 });
       clearLocationZoomRequest();
     } else if (navigationMode && map.getZoom() < 15) {

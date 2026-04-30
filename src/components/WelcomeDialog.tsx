@@ -7,11 +7,13 @@ export function WelcomeDialog() {
   const welcomeSeen = useStore((s) => s.welcomeSeen);
   const markWelcomeSeen = useStore((s) => s.markWelcomeSeen);
   const setLiveTracking = useStore((s) => s.setLiveTracking);
-  const requestLocationZoom = useStore((s) => s.requestLocationZoom);
 
   function activate() {
-    setLiveTracking(true); // já liga followMe automático
-    requestLocationZoom(); // MapView vai dar flyTo no primeiro fix
+    // setLiveTracking(true) liga followMe automático.
+    // O flyTo até a cidade é disparado pelo useLiveLocation no PRIMEIRO fix
+    // de GPS — ou seja, depois que a posição real chegar, não para um origin
+    // antigo que estivesse salvo.
+    setLiveTracking(true);
     markWelcomeSeen();
   }
 
