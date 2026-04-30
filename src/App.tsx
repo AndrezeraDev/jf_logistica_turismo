@@ -179,12 +179,13 @@ export default function App() {
       <div className="flex-1 relative">
         <MapView onHotelClick={setActiveHotel} onAddHotelAt={setNewHotelAt} />
 
-        {/* Hamburger — só no mobile, e escondido em modo navegação */}
+        {/* Hamburger — só no mobile, e escondido em modo navegação.
+            top-[92px] evita colidir com o controle de zoom do Leaflet (~10–80px do topo). */}
         {!navigationMode && (
           <button
             onClick={() => setDrawerOpen(true)}
             aria-label="Abrir menu"
-            className="md:hidden absolute top-4 left-4 z-[1000] glass rounded-full w-11 h-11 flex items-center justify-center shadow-glass text-ink-100 hover:bg-white/[0.12]"
+            className="md:hidden absolute top-[92px] left-4 z-[1000] glass rounded-full w-11 h-11 flex items-center justify-center shadow-glass text-ink-100 hover:bg-white/[0.12]"
           >
             <Menu className="w-5 h-5" />
           </button>
