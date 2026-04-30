@@ -80,19 +80,29 @@ export function MapView({
   const liveAccuracyM = useStore((s) => s.liveAccuracyM);
   const followMe = useStore((s) => s.followMe);
   const setFollowMe = useStore((s) => s.setFollowMe);
+  const navigationMode = useStore((s) => s.navigationMode);
+  const currentStopIndex = useStore((s) => s.currentStopIndex);
+  const setCurrentStopIndex = useStore((s) => s.setCurrentStopIndex);
   const [showAreaBtn, setShowAreaBtn] = useState(false);
   const [centerTick, setCenterTick] = useState(0);
 
   // Init map once
   useEffect(() => {
     if (!mapRef.current || mapInst.current) return;
+    // Zoom inicial — se já tiver "Meu local" salvo, abre na cidade/região (zoom 11);
+    // senão, zoom continental Brasil pra dar contexto.
+    const initialOrigin = useStore.getState().settings.origin;
+    const initialView: [number, number, number] = initialOrigin
+      ? [initialOrigin.lat, initialOrigin.lng, 11]
+      : [-15.78, -47.93, 4];
+
     const map = L.map(mapRef.current, {
       zoomControl: true,
       attributionControl: true,
       preferCanvas: true,
       minZoom: 3,
       maxZoom: 19,
-    }).setView([-15.78, -47.93], 4);
+    }).setView([initialView[0], initialView[1]], initialView[2]);
 
     const tileLayer = L.tileLayer(
       'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -300,6 +310,27 @@ export function MapView({
     }).addTo(map);
   }, [radiusKm, showRadiusCircle, centerTick]);
 
+  // Navigation mode — animação suave de zoom no usuário ao iniciar
+  useEffect(() => {
+    const map = mapInst.current;
+    if (!map || !navigationMode) return;
+    const o = useStore.getState().settings.origin;
+    if (!o) return;
+    map.flyTo([o.lat, o.lng], 17, { duration: 1.4, easeLinearity: 0.25 });
+  }, [navigationMode]);
+
+  // Auto-progresso: quando origin chega perto da parada atual, avança índice
+  useEffect(() => {
+    if (!navigationMode || !route || !origin) return;
+    const all = [...route.stops, ...route.returnStops];
+    const target = all[currentStopIndex];
+    if (!target) return;
+    const dKm = haversineKmLocal(origin, { lat: target.lat, lng: target.lng });
+    if (dKm < 0.06 && currentStopIndex < all.length - 1) {
+      setCurrentStopIndex(currentStopIndex + 1);
+    }
+  }, [origin, navigationMode, route, currentStopIndex, setCurrentStopIndex]);
+
   // Draw route
   useEffect(() => {
     const map = mapInst.current;
@@ -351,7 +382,7 @@ export function MapView({
   return (
     <div className="relative w-full h-full">
       <div ref={mapRef} className="w-full h-full" />
-      {showAreaBtn && (
+      {showAreaBtn && !navigationMode && (
         <button
           onClick={fetchAreaHotels}
           disabled={hotelsLoading}
@@ -365,7 +396,7 @@ export function MapView({
           Buscar hotéis em {radiusKm} km
         </button>
       )}
-      {origin && (
+      {origin && !navigationMode && (
         <button
           onClick={centerOnMe}
           title={followMe ? 'Seguindo — clique no mapa para pausar' : 'Centralizar em mim'}
@@ -424,4 +455,16 @@ function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, (c) =>
     c === '&' ? '&amp;' : c === '<' ? '&lt;' : c === '>' ? '&gt;' : c === '"' ? '&quot;' : '&#39;',
   );
+}
+
+function haversineKmLocal(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const R = 6371;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((a.lat * Math.PI) / 180) *
+      Math.cos((b.lat * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
 }

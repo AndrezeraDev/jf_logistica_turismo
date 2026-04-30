@@ -9,6 +9,7 @@ import { AddHotelModal } from './components/AddHotelModal';
 import { FleetPanel } from './components/FleetPanel';
 import { SettingsPanel } from './components/SettingsPanel';
 import { RoutePanel } from './components/RoutePanel';
+import { NavigationOverlay } from './components/NavigationOverlay';
 import { useStore } from './store/useStore';
 import { useLiveLocation } from './lib/useLiveLocation';
 import type { Hotel } from './types';
@@ -26,6 +27,7 @@ export default function App() {
   const setPickingOrigin = useStore((s) => s.setPickingOrigin);
   const addingHotel = useStore((s) => s.addingHotel);
   const setAddingHotel = useStore((s) => s.setAddingHotel);
+  const navigationMode = useStore((s) => s.navigationMode);
 
   useLiveLocation();
 
@@ -177,14 +179,16 @@ export default function App() {
       <div className="flex-1 relative">
         <MapView onHotelClick={setActiveHotel} onAddHotelAt={setNewHotelAt} />
 
-        {/* Hamburger — só aparece no mobile */}
-        <button
-          onClick={() => setDrawerOpen(true)}
-          aria-label="Abrir menu"
-          className="md:hidden absolute top-4 left-4 z-[1000] glass rounded-full w-11 h-11 flex items-center justify-center shadow-glass text-ink-100 hover:bg-white/[0.12]"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
+        {/* Hamburger — só no mobile, e escondido em modo navegação */}
+        {!navigationMode && (
+          <button
+            onClick={() => setDrawerOpen(true)}
+            aria-label="Abrir menu"
+            className="md:hidden absolute top-4 left-4 z-[1000] glass rounded-full w-11 h-11 flex items-center justify-center shadow-glass text-ink-100 hover:bg-white/[0.12]"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        )}
 
         <AnimatePresence>
           {pickingOrigin && (
@@ -224,7 +228,7 @@ export default function App() {
           )}
         </AnimatePresence>
 
-        {hotels.length === 0 && (
+        {hotels.length === 0 && !navigationMode && (
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center px-4">
             <motion.div
               initial={{ opacity: 0, y: 8 }}
@@ -239,6 +243,8 @@ export default function App() {
             </motion.div>
           </div>
         )}
+
+        <NavigationOverlay />
       </div>
 
       <GuestModal

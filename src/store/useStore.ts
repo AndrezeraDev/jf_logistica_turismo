@@ -24,6 +24,8 @@ interface State {
   liveAccuracyM?: number;
   liveError?: string;
   followMe: boolean;
+  navigationMode: boolean;
+  currentStopIndex: number;
 
   // actions
   setCity: (city: City | undefined) => void;
@@ -46,6 +48,9 @@ interface State {
   setLiveAccuracy: (m: number | undefined) => void;
   setLiveError: (e: string | undefined) => void;
   setFollowMe: (b: boolean) => void;
+  startNavigation: () => void;
+  stopNavigation: () => void;
+  setCurrentStopIndex: (i: number) => void;
   reset: () => void;
 }
 
@@ -82,6 +87,8 @@ export const useStore = create<State>()(
       liveAccuracyM: undefined,
       liveError: undefined,
       followMe: false,
+      navigationMode: false,
+      currentStopIndex: 0,
 
       setCity: (city) => set({ selectedCity: city, hotels: [], route: undefined }),
       setHotels: (hotels) => set({ hotels }),
@@ -132,6 +139,15 @@ export const useStore = create<State>()(
       setLiveAccuracy: (m) => set({ liveAccuracyM: m }),
       setLiveError: (e) => set({ liveError: e }),
       setFollowMe: (b) => set({ followMe: b }),
+      startNavigation: () =>
+        set({
+          navigationMode: true,
+          currentStopIndex: 0,
+          liveTracking: true,
+          followMe: true,
+        }),
+      stopNavigation: () => set({ navigationMode: false }),
+      setCurrentStopIndex: (i) => set({ currentStopIndex: i }),
       reset: () => set({ hotels: [], route: undefined, selectedCity: undefined }),
     }),
     {
