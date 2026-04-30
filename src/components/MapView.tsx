@@ -55,6 +55,8 @@ export function MapView({
   const originMarkerRef = useRef<L.Marker | null>(null);
   const accuracyCircleRef = useRef<L.Circle | null>(null);
   const radiusCircleRef = useRef<L.Circle | null>(null);
+  // Última coordenada que processamos — evita panTo após flyTo (mesma coord, dep diferente)
+  const lastHandledOriginRef = useRef<{ lat: number; lng: number } | null>(null);
   const onHotelClickRef = useRef(onHotelClick);
   onHotelClickRef.current = onHotelClick;
   const onAddHotelAtRef = useRef(onAddHotelAt);
@@ -288,16 +290,26 @@ export function MapView({
     //  1) Welcome / "Ativar GPS" pediu zoom suave → flyTo com zoom forte
     //  2) Modo navegação ativo → flyTo com zoom street-level
     //  3) Follow mode normal → panTo suave (mantém zoom atual)
-    //  Importante: só UMA das três deve disparar por update — flyTo e panTo se cancelam.
+    //
+    // Crucial: o efeito re-roda quando QUALQUER dep mudar (não só origin).
+    // Ex.: depois do flyTo, clearLocationZoomRequest dispara um novo render →
+    // efeito roda de novo com mesmo origin → cairia em panTo e interromperia
+    // a animação do flyTo. Por isso só pannamos se origin REALMENTE mudou.
+    const last = lastHandledOriginRef.current;
+    const originChanged =
+      !last || last.lat !== origin.lat || last.lng !== origin.lng;
+
     if (requestZoomOnNextLocation) {
-      // Zoom 13 = nível cidade (cabe a maioria das cidades brasileiras na tela)
       const targetZoom = Math.max(map.getZoom(), 13);
       map.flyTo(latLng, targetZoom, { duration: 1.6, easeLinearity: 0.2 });
       clearLocationZoomRequest();
-    } else if (navigationMode && map.getZoom() < 15) {
+      lastHandledOriginRef.current = { lat: origin.lat, lng: origin.lng };
+    } else if (navigationMode && map.getZoom() < 15 && originChanged) {
       map.flyTo(latLng, 17, { duration: 1.4, easeLinearity: 0.25 });
-    } else if (followMe) {
+      lastHandledOriginRef.current = { lat: origin.lat, lng: origin.lng };
+    } else if (followMe && originChanged) {
       map.panTo(latLng, { animate: true, duration: 0.6 });
+      lastHandledOriginRef.current = { lat: origin.lat, lng: origin.lng };
     }
   }, [
     origin,
