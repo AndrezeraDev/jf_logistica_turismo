@@ -10,16 +10,33 @@ import type { Hotel, Route } from '../types';
 // @ts-expect-error private
 delete L.Icon.Default.prototype._getIconUrl;
 
-function hotelIcon(hotel: Hotel): L.DivIcon {
+/** Tamanho do ícone do hotel em função do zoom — pra evitar que ícones se sobreponham
+ *  em zoom de cidade (lots of hotels) e cresçam pra ficar legíveis em zoom de rua. */
+function hotelIconSize(zoom: number): number {
+  if (zoom < 13) return 14;
+  if (zoom < 15) return 20;
+  if (zoom < 17) return 26;
+  return 32;
+}
+
+function hotelIcon(hotel: Hotel, size: number, animate = true): L.DivIcon {
   const has = hotel.guests > 0;
+  // Em tamanhos pequenos, esconde texto/ring pra ficar limpo (pontos coloridos).
+  const showText = size >= 18;
+  const showRing = !has && size >= 22;
+  const fontSize = Math.max(9, Math.round(size * 0.42));
+  const borderWidth = size <= 16 ? 1.5 : 2.5;
+  const text = showText ? (has ? String(hotel.guests) : 'H') : '';
+  const ring = showRing ? '<span class="ring"></span>' : '';
+  const animClass = animate ? 'pop-in' : '';
   return L.divIcon({
     className: '',
-    iconSize: [30, 30],
-    iconAnchor: [15, 15],
-    html: `<div class="hotel-pin pop-in ${has ? 'has-guests' : ''}">
-      ${has ? String(hotel.guests) : '<span class="ring"></span>H'}
-      ${has ? '' : ''}
-    </div>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    html:
+      `<div class="hotel-pin ${animClass} ${has ? 'has-guests' : ''}" ` +
+      `style="width:${size}px;height:${size}px;font-size:${fontSize}px;border-width:${borderWidth}px">` +
+      `${ring}${text}</div>`,
   });
 }
 
@@ -89,6 +106,7 @@ export function MapView({
   const clearLocationZoomRequest = useStore((s) => s.clearLocationZoomRequest);
   const [showAreaBtn, setShowAreaBtn] = useState(false);
   const [centerTick, setCenterTick] = useState(0);
+  const [hotelSize, setHotelSize] = useState(() => hotelIconSize(11));
 
   // Init map once
   useEffect(() => {
@@ -126,6 +144,11 @@ export function MapView({
       setCenterTick((t) => t + 1);
     });
     map.on('move', () => setCenterTick((t) => t + 1));
+    // atualiza tamanho dos ícones conforme zoom
+    map.on('zoomend', () => {
+      setHotelSize(hotelIconSize(map.getZoom()));
+    });
+    setHotelSize(hotelIconSize(map.getZoom())); // sincroniza com zoom inicial
     // pan manual do usuário quebra o follow mode
     map.on('dragstart', () => {
       if (useStore.getState().followMe) useStore.getState().setFollowMe(false);
@@ -157,23 +180,28 @@ export function MapView({
     );
   }, [selectedCity]);
 
-  // Draw hotels — quando há rota calculada, mostra só os hotéis com hóspedes
+  // Draw hotels — quando há rota calculada, mostra só os hotéis com hóspedes.
+  // Pop-in animation só na primeira renderização da lista; em mudanças de zoom
+  // (só `hotelSize` mudou), redesenha sem animação pra não ficar piscando.
+  const lastHotelsRef = useRef<Hotel[] | null>(null);
   useEffect(() => {
     const layer = hotelLayerRef.current;
     if (!layer) return;
     layer.clearLayers();
     const displayed = route ? hotels.filter((h) => h.guests > 0) : hotels;
+    const isNewList = lastHotelsRef.current !== hotels;
+    lastHotelsRef.current = hotels;
     displayed.forEach((h, i) => {
       const m = L.marker([h.lat, h.lng], {
-        icon: hotelIcon(h),
-        // staggered pop-in via CSS only — leaflet adds marker immediately
-        opacity: 0,
+        icon: hotelIcon(h, hotelSize, isNewList),
+        opacity: isNewList ? 0 : 1,
       });
       m.on('click', () => onHotelClickRef.current(h));
-      m.on('add', () => {
-        // staggered appearance
-        setTimeout(() => m.setOpacity(1), Math.min(i * 20, 1500));
-      });
+      if (isNewList) {
+        m.on('add', () => {
+          setTimeout(() => m.setOpacity(1), Math.min(i * 20, 1500));
+        });
+      }
       m.bindTooltip(
         `<div style="font-size:12px"><b>${escapeHtml(h.name)}</b>${
           h.guests > 0
@@ -184,7 +212,7 @@ export function MapView({
       );
       layer.addLayer(m);
     });
-  }, [hotels, route]);
+  }, [hotels, route, hotelSize]);
 
   // Picking origin mode — change cursor + capture next click
   useEffect(() => {
@@ -299,7 +327,11 @@ export function MapView({
     const originChanged =
       !last || last.lat !== origin.lat || last.lng !== origin.lng;
 
-    if (requestZoomOnNextLocation) {
+    if (requestZoomOnNextLocation && originChanged) {
+      // Só consome o request quando origin REALMENTE mudou. Se origin é o mesmo
+      // de antes (e.g., requestZoom chegou antes do setSettings em renders separados),
+      // aguardamos o próximo update — assim o flyTo vai pra coordenada do GPS atual,
+      // não pra um origin antigo que estava no store.
       const targetZoom = Math.max(map.getZoom(), 13);
       map.flyTo(latLng, targetZoom, { duration: 1.6, easeLinearity: 0.2 });
       clearLocationZoomRequest();

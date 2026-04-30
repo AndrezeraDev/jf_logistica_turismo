@@ -166,6 +166,7 @@ export const useStore = create<State>()(
         vehicles: s.vehicles,
         settings: s.settings,
         welcomeSeen: s.welcomeSeen,
+        liveTracking: s.liveTracking, // persiste pra GPS reativar automático no próximo open
       }),
     },
   ),
