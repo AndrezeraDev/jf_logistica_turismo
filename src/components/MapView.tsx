@@ -244,14 +244,21 @@ export function MapView({
         .addTo(map);
     }
 
-    // círculo de accuracy (só enquanto live tracking e se for informativo)
-    if (liveTracking && liveAccuracyM && liveAccuracyM > 0) {
+    // círculo de accuracy — só desenha quando informativo:
+    //  - precisa de live tracking ativo
+    //  - precisão precisa estar definida e > 0
+    //  - se a incerteza for grande (>250m), o círculo cobre a cidade inteira no zoom,
+    //    então escondemos. O ponto branco já indica a posição.
+    const ACCURACY_MAX_M = 250;
+    const showAccuracyCircle =
+      liveTracking && !!liveAccuracyM && liveAccuracyM > 0 && liveAccuracyM <= ACCURACY_MAX_M;
+    if (showAccuracyCircle) {
       if (accuracyCircleRef.current) {
         accuracyCircleRef.current.setLatLng(latLng);
-        accuracyCircleRef.current.setRadius(liveAccuracyM);
+        accuracyCircleRef.current.setRadius(liveAccuracyM!);
       } else {
         accuracyCircleRef.current = L.circle(latLng, {
-          radius: liveAccuracyM,
+          radius: liveAccuracyM!,
           color: '#0A84FF',
           weight: 1,
           opacity: 0.35,
