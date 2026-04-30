@@ -284,11 +284,29 @@ export function MapView({
       accuracyCircleRef.current = null;
     }
 
-    // follow mode: centraliza suavemente
-    if (followMe) {
+    // Prioridade de animação ao receber novo origin:
+    //  1) Welcome / "Ativar GPS" pediu zoom suave → flyTo com zoom forte
+    //  2) Modo navegação ativo → flyTo com zoom street-level
+    //  3) Follow mode normal → panTo suave (mantém zoom atual)
+    //  Importante: só UMA das três deve disparar por update — flyTo e panTo se cancelam.
+    if (requestZoomOnNextLocation) {
+      const targetZoom = Math.max(map.getZoom(), 16);
+      map.flyTo(latLng, targetZoom, { duration: 1.6, easeLinearity: 0.2 });
+      clearLocationZoomRequest();
+    } else if (navigationMode && map.getZoom() < 15) {
+      map.flyTo(latLng, 17, { duration: 1.4, easeLinearity: 0.25 });
+    } else if (followMe) {
       map.panTo(latLng, { animate: true, duration: 0.6 });
     }
-  }, [origin, liveTracking, liveAccuracyM, followMe]);
+  }, [
+    origin,
+    liveTracking,
+    liveAccuracyM,
+    followMe,
+    requestZoomOnNextLocation,
+    clearLocationZoomRequest,
+    navigationMode,
+  ]);
 
   // Radius circle — segue o centro do mapa
   useEffect(() => {
@@ -312,7 +330,8 @@ export function MapView({
     }).addTo(map);
   }, [radiusKm, showRadiusCircle, centerTick]);
 
-  // Navigation mode — animação suave de zoom no usuário ao iniciar
+  // Navigation mode — animação inicial quando entra no modo navegação
+  // (caso origin já exista; se não, o efeito do origin abaixo cuida no primeiro fix)
   useEffect(() => {
     const map = mapInst.current;
     if (!map || !navigationMode) return;
@@ -320,14 +339,6 @@ export function MapView({
     if (!o) return;
     map.flyTo([o.lat, o.lng], 17, { duration: 1.4, easeLinearity: 0.25 });
   }, [navigationMode]);
-
-  // Welcome / "Ativar GPS" — ao chegar o primeiro fix de GPS, dá flyTo suave
-  useEffect(() => {
-    const map = mapInst.current;
-    if (!map || !requestZoomOnNextLocation || !origin) return;
-    map.flyTo([origin.lat, origin.lng], 16, { duration: 1.6, easeLinearity: 0.2 });
-    clearLocationZoomRequest();
-  }, [requestZoomOnNextLocation, origin, clearLocationZoomRequest]);
 
   // Auto-progresso: quando origin chega perto da parada atual, avança índice
   useEffect(() => {
