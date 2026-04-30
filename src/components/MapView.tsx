@@ -83,6 +83,8 @@ export function MapView({
   const navigationMode = useStore((s) => s.navigationMode);
   const currentStopIndex = useStore((s) => s.currentStopIndex);
   const setCurrentStopIndex = useStore((s) => s.setCurrentStopIndex);
+  const requestZoomOnNextLocation = useStore((s) => s.requestZoomOnNextLocation);
+  const clearLocationZoomRequest = useStore((s) => s.clearLocationZoomRequest);
   const [showAreaBtn, setShowAreaBtn] = useState(false);
   const [centerTick, setCenterTick] = useState(0);
 
@@ -318,6 +320,14 @@ export function MapView({
     if (!o) return;
     map.flyTo([o.lat, o.lng], 17, { duration: 1.4, easeLinearity: 0.25 });
   }, [navigationMode]);
+
+  // Welcome / "Ativar GPS" — ao chegar o primeiro fix de GPS, dá flyTo suave
+  useEffect(() => {
+    const map = mapInst.current;
+    if (!map || !requestZoomOnNextLocation || !origin) return;
+    map.flyTo([origin.lat, origin.lng], 16, { duration: 1.6, easeLinearity: 0.2 });
+    clearLocationZoomRequest();
+  }, [requestZoomOnNextLocation, origin, clearLocationZoomRequest]);
 
   // Auto-progresso: quando origin chega perto da parada atual, avança índice
   useEffect(() => {

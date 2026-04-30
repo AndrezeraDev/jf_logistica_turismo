@@ -26,6 +26,8 @@ interface State {
   followMe: boolean;
   navigationMode: boolean;
   currentStopIndex: number;
+  welcomeSeen: boolean;
+  requestZoomOnNextLocation: boolean;
 
   // actions
   setCity: (city: City | undefined) => void;
@@ -51,6 +53,9 @@ interface State {
   startNavigation: () => void;
   stopNavigation: () => void;
   setCurrentStopIndex: (i: number) => void;
+  markWelcomeSeen: () => void;
+  requestLocationZoom: () => void;
+  clearLocationZoomRequest: () => void;
   reset: () => void;
 }
 
@@ -89,6 +94,8 @@ export const useStore = create<State>()(
       followMe: false,
       navigationMode: false,
       currentStopIndex: 0,
+      welcomeSeen: false,
+      requestZoomOnNextLocation: false,
 
       setCity: (city) => set({ selectedCity: city, hotels: [], route: undefined }),
       setHotels: (hotels) => set({ hotels }),
@@ -148,6 +155,9 @@ export const useStore = create<State>()(
         }),
       stopNavigation: () => set({ navigationMode: false }),
       setCurrentStopIndex: (i) => set({ currentStopIndex: i }),
+      markWelcomeSeen: () => set({ welcomeSeen: true }),
+      requestLocationZoom: () => set({ requestZoomOnNextLocation: true }),
+      clearLocationZoomRequest: () => set({ requestZoomOnNextLocation: false }),
       reset: () => set({ hotels: [], route: undefined, selectedCity: undefined }),
     }),
     {
@@ -155,6 +165,7 @@ export const useStore = create<State>()(
       partialize: (s) => ({
         vehicles: s.vehicles,
         settings: s.settings,
+        welcomeSeen: s.welcomeSeen,
       }),
     },
   ),

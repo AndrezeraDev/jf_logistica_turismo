@@ -10,6 +10,7 @@ import { FleetPanel } from './components/FleetPanel';
 import { SettingsPanel } from './components/SettingsPanel';
 import { RoutePanel } from './components/RoutePanel';
 import { NavigationOverlay } from './components/NavigationOverlay';
+import { WelcomeDialog } from './components/WelcomeDialog';
 import { useStore } from './store/useStore';
 import { useLiveLocation } from './lib/useLiveLocation';
 import type { Hotel } from './types';
@@ -267,6 +268,8 @@ export default function App() {
           setNewHotelAt(null);
         }}
       />
+
+      <WelcomeDialog />
     </div>
   );
 }
