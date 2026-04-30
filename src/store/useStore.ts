@@ -122,7 +122,13 @@ export const useStore = create<State>()(
       setHotelsLoading: (b) => set({ hotelsLoading: b }),
       setHotelsError: (e) => set({ hotelsError: e }),
       markHotelsFetched: () => set({ hotelsFetchedAt: Date.now() }),
-      setLiveTracking: (b) => set({ liveTracking: b, liveError: undefined }),
+      setLiveTracking: (b) =>
+        set({
+          liveTracking: b,
+          liveError: undefined,
+          // ao ligar tracking, segue automaticamente; ao desligar, para de seguir
+          followMe: b ? true : false,
+        }),
       setLiveAccuracy: (m) => set({ liveAccuracyM: m }),
       setLiveError: (e) => set({ liveError: e }),
       setFollowMe: (b) => set({ followMe: b }),
