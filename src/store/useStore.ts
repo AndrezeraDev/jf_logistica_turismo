@@ -166,12 +166,14 @@ export const useStore = create<State>()(
       reset: () => set({ hotels: [], route: undefined, selectedCity: undefined }),
     }),
     {
-      name: 'jf-system',
+      // bump da chave (jf-system → jf-system-v2) força reaparecer o welcome
+      // novo (marcar ponto de partida) pra usuários que já viam o antigo (GPS).
+      name: 'jf-system-v2',
       partialize: (s) => ({
         vehicles: s.vehicles,
         settings: s.settings,
         welcomeSeen: s.welcomeSeen,
-        liveTracking: s.liveTracking, // persiste pra GPS reativar automático no próximo open
+        liveTracking: s.liveTracking,
       }),
     },
   ),

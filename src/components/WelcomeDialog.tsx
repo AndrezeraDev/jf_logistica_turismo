@@ -1,19 +1,17 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { Navigation, MapPin, Sparkles } from 'lucide-react';
+import { Crosshair, MapPin, Sparkles } from 'lucide-react';
 import { Button } from './ui/Button';
 import { useStore } from '../store/useStore';
 
 export function WelcomeDialog() {
   const welcomeSeen = useStore((s) => s.welcomeSeen);
   const markWelcomeSeen = useStore((s) => s.markWelcomeSeen);
-  const setLiveTracking = useStore((s) => s.setLiveTracking);
+  const setPickingOrigin = useStore((s) => s.setPickingOrigin);
 
-  function activate() {
-    // setLiveTracking(true) liga followMe automático.
-    // O flyTo até a cidade é disparado pelo useLiveLocation no PRIMEIRO fix
-    // de GPS — ou seja, depois que a posição real chegar, não para um origin
-    // antigo que estivesse salvo.
-    setLiveTracking(true);
+  function pickOrigin() {
+    // Ativa o modo "marcar no mapa" — o MapView captura o próximo click e salva
+    // como settings.origin (com reverse geocode pra label).
+    setPickingOrigin(true);
     markWelcomeSeen();
   }
 
@@ -38,19 +36,17 @@ export function WelcomeDialog() {
             transition={{ duration: 0.32, ease: [0.34, 1.56, 0.64, 1] }}
             className="glass w-full max-w-md rounded-3xl p-6 shadow-glass relative overflow-hidden"
           >
-            {/* halo decorativo */}
             <div className="pointer-events-none absolute -top-24 -right-24 w-64 h-64 rounded-full bg-accent/20 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-20 -left-20 w-56 h-56 rounded-full bg-emerald-500/10 blur-3xl" />
 
             <div className="relative">
-              {/* ícone hero */}
               <motion.div
                 initial={{ scale: 0.6, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.1, type: 'spring', stiffness: 280, damping: 18 }}
                 className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-b from-accent to-blue-600 flex items-center justify-center shadow-[0_10px_30px_rgba(10,132,255,0.55)]"
               >
-                <Navigation className="w-7 h-7 text-white" fill="currentColor" />
+                <Crosshair className="w-7 h-7 text-white" />
               </motion.div>
 
               <div className="text-center mt-4">
@@ -58,20 +54,18 @@ export function WelcomeDialog() {
                   <Sparkles className="w-3 h-3" /> Bem-vindo
                 </div>
                 <h2 className="text-[22px] font-semibold tracking-tight mt-1">
-                  Ative o GPS pra começar
+                  Marque seu ponto de partida
                 </h2>
                 <p className="text-[13px] text-ink-300 leading-relaxed mt-2">
-                  Ao ativar, sua localização aparece em tempo real no mapa e o app já enquadra
-                  automaticamente onde você está. Você pode desligar a qualquer momento em
-                  Configurações.
+                  É a partir desse ponto que as rotas serão calculadas. Toque no botão
+                  abaixo e clique no local exato no mapa.
                 </p>
               </div>
 
-              {/* benefícios */}
               <div className="mt-5 space-y-2">
-                <Bullet text="Posição atualizada conforme você se desloca" />
-                <Bullet text="Mapa centralizado em você" />
-                <Bullet text="Otimização de rota com base no seu ponto" />
+                <Bullet text="Garagem, hotel base, escritório — onde a operação inicia" />
+                <Bullet text="Pode mudar a qualquer momento em Configurações" />
+                <Bullet text="A rota de coleta e retorno usa esse ponto" />
               </div>
 
               <div className="mt-6 space-y-2">
@@ -79,10 +73,10 @@ export function WelcomeDialog() {
                   variant="primary"
                   size="lg"
                   className="w-full"
-                  onClick={activate}
+                  onClick={pickOrigin}
                 >
                   <MapPin className="w-4 h-4" />
-                  Ativar GPS
+                  Marcar no mapa
                 </Button>
                 <Button
                   variant="ghost"
@@ -95,7 +89,7 @@ export function WelcomeDialog() {
               </div>
 
               <div className="mt-3 text-[10px] text-ink-500 text-center leading-relaxed">
-                Sua localização nunca sai do dispositivo. Funciona em HTTPS ou localhost.
+                Você também pode buscar por endereço em Configurações.
               </div>
             </div>
           </motion.div>
