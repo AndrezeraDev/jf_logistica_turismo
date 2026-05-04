@@ -112,12 +112,13 @@ export function MapView({
   // Init map once
   useEffect(() => {
     if (!mapRef.current || mapInst.current) return;
-    // Zoom inicial — se já tiver "Meu local" salvo, abre na cidade/região (zoom 11);
-    // senão, zoom continental Brasil pra dar contexto.
+    // Zoom inicial — se já tiver "Meu local" salvo, abre na cidade/região (zoom 11).
+    // Senão, abre em Gramado/RS (default — base operacional).
+    const GRAMADO: [number, number, number] = [-29.3756, -50.8744, 13];
     const initialOrigin = useStore.getState().settings.origin;
     const initialView: [number, number, number] = initialOrigin
       ? [initialOrigin.lat, initialOrigin.lng, 11]
-      : [-15.78, -47.93, 4];
+      : GRAMADO;
 
     const map = L.map(mapRef.current, {
       zoomControl: true,
