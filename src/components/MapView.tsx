@@ -104,6 +104,7 @@ export function MapView({
   const setCurrentStopIndex = useStore((s) => s.setCurrentStopIndex);
   const requestZoomOnNextLocation = useStore((s) => s.requestZoomOnNextLocation);
   const clearLocationZoomRequest = useStore((s) => s.clearLocationZoomRequest);
+  const flyToTarget = useStore((s) => s.flyToTarget);
   const [showAreaBtn, setShowAreaBtn] = useState(false);
   const [centerTick, setCenterTick] = useState(0);
   const [hotelSize, setHotelSize] = useState(() => hotelIconSize(11));
@@ -374,6 +375,18 @@ export function MapView({
       interactive: false,
     }).addTo(map);
   }, [radiusKm, showRadiusCircle, centerTick]);
+
+  // External flyTo trigger (lupa de busca, etc) — disparado via store
+  useEffect(() => {
+    const map = mapInst.current;
+    if (!map || !flyToTarget) return;
+    map.flyTo(
+      [flyToTarget.lat, flyToTarget.lng],
+      flyToTarget.zoom ?? Math.max(map.getZoom(), 17),
+      { duration: 1.0, easeLinearity: 0.25 },
+    );
+    // não precisamos limpar — o ts garante unicidade; se vier outro request, dispara de novo
+  }, [flyToTarget]);
 
   // Navigation mode — animação inicial quando entra no modo navegação
   // (caso origin já exista; se não, o efeito do origin abaixo cuida no primeiro fix)

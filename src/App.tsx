@@ -11,6 +11,7 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { RoutePanel } from './components/RoutePanel';
 import { NavigationOverlay } from './components/NavigationOverlay';
 import { WelcomeDialog } from './components/WelcomeDialog';
+import { HotelSearch } from './components/HotelSearch';
 import { useStore } from './store/useStore';
 import { useLiveLocation } from './lib/useLiveLocation';
 import type { Hotel } from './types';
@@ -29,6 +30,7 @@ export default function App() {
   const addingHotel = useStore((s) => s.addingHotel);
   const setAddingHotel = useStore((s) => s.setAddingHotel);
   const navigationMode = useStore((s) => s.navigationMode);
+  const flyToMap = useStore((s) => s.flyTo);
 
   useLiveLocation();
 
@@ -245,6 +247,14 @@ export default function App() {
             </motion.div>
           </div>
         )}
+
+        <HotelSearch
+          onPick={(h) => {
+            flyToMap(h.lat, h.lng, 17);
+            // pequeno delay pra o flyTo começar antes do modal cobrir o mapa
+            setTimeout(() => setActiveHotel(h), 380);
+          }}
+        />
 
         <NavigationOverlay />
       </div>

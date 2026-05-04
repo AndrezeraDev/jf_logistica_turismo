@@ -28,6 +28,7 @@ interface State {
   currentStopIndex: number;
   welcomeSeen: boolean;
   requestZoomOnNextLocation: boolean;
+  flyToTarget?: { lat: number; lng: number; zoom?: number; ts: number };
 
   // actions
   setCity: (city: City | undefined) => void;
@@ -56,6 +57,7 @@ interface State {
   markWelcomeSeen: () => void;
   requestLocationZoom: () => void;
   clearLocationZoomRequest: () => void;
+  flyTo: (lat: number, lng: number, zoom?: number) => void;
   reset: () => void;
 }
 
@@ -96,6 +98,7 @@ export const useStore = create<State>()(
       currentStopIndex: 0,
       welcomeSeen: false,
       requestZoomOnNextLocation: false,
+      flyToTarget: undefined,
 
       setCity: (city) => set({ selectedCity: city, hotels: [], route: undefined }),
       setHotels: (hotels) => set({ hotels }),
@@ -158,6 +161,8 @@ export const useStore = create<State>()(
       markWelcomeSeen: () => set({ welcomeSeen: true }),
       requestLocationZoom: () => set({ requestZoomOnNextLocation: true }),
       clearLocationZoomRequest: () => set({ requestZoomOnNextLocation: false }),
+      flyTo: (lat, lng, zoom) =>
+        set({ flyToTarget: { lat, lng, zoom, ts: Date.now() } }),
       reset: () => set({ hotels: [], route: undefined, selectedCity: undefined }),
     }),
     {
