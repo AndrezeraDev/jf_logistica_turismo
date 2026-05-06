@@ -161,32 +161,38 @@ export function LoginPage() {
             />
           </div>
 
-          <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white/[0.03] border border-white/8">
-            <span className="text-[11px] uppercase tracking-wider text-ink-400 select-none flex-shrink-0">
-              Anti-bot
-            </span>
-            <span className="font-mono text-[14px] text-ink-100 select-none">
-              {captcha.a} + {captcha.b} =
-            </span>
-            <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              value={captchaInput}
-              onChange={(e) => setCaptchaInput(e.target.value.replace(/\D/g, ''))}
-              onKeyDown={(e) => e.key === 'Enter' && submit()}
-              className="flex-1 bg-transparent outline-none text-center font-mono text-[14px] text-ink-100"
-              maxLength={2}
-              aria-label="Resposta do captcha"
-            />
-            <button
-              type="button"
-              onClick={regen}
-              className="w-7 h-7 rounded-lg flex items-center justify-center text-ink-400 hover:text-ink-100 hover:bg-white/5 transition-colors"
-              aria-label="Trocar"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-            </button>
+          <div className="px-3 py-2.5 rounded-xl bg-white/[0.03] border border-white/8 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] uppercase tracking-[0.15em] text-ink-400 select-none">
+                Verificação anti-bot
+              </span>
+              <button
+                type="button"
+                onClick={regen}
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-ink-400 hover:text-ink-100 hover:bg-white/5 transition-colors"
+                aria-label="Gerar nova"
+                title="Trocar números"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-[16px] text-ink-100 select-none flex-shrink-0">
+                {captcha.a} + {captcha.b} =
+              </span>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={captchaInput}
+                onChange={(e) => setCaptchaInput(e.target.value.replace(/\D/g, ''))}
+                onKeyDown={(e) => e.key === 'Enter' && submit()}
+                className="flex-1 h-9 bg-white/[0.04] border border-white/10 rounded-lg outline-none text-center font-mono text-[16px] text-ink-100 focus:border-accent/60"
+                maxLength={2}
+                aria-label="Resposta do captcha"
+                placeholder="?"
+              />
+            </div>
           </div>
 
           <AnimatePresence>
