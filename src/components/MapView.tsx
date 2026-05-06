@@ -439,27 +439,48 @@ export function MapView({
     const c = map.getCenter();
     setHotelsLoading(true);
     setHotelsError(undefined);
+    const setLastSearchSources = useStore.getState().setLastSearchSources;
     try {
       const fsqKey = useStore.getState().settings.foursquareApiKey?.trim();
-      // Foursquare PRIMEIRO (nomes/endereços melhores quando disponível) +
-      // OSM como complemento. Dedupe mantém o primeiro visto = Foursquare.
-      const tasks: Promise<Hotel[]>[] = [];
-      if (fsqKey) {
-        tasks.push(
-          fetchHotelsFsqRadius(fsqKey, c.lat, c.lng, radiusKm).catch((e) => {
-            console.warn('[foursquare]', e);
-            return [];
-          }),
-        );
+      let fsqError: string | undefined;
+
+      // Faz as duas chamadas em paralelo, capturando contagens individualmente
+      const fsqPromise = fsqKey
+        ? fetchHotelsFsqRadius(fsqKey, c.lat, c.lng, radiusKm).catch((e) => {
+            fsqError = e instanceof Error ? e.message : String(e);
+            console.warn('[foursquare]', fsqError);
+            return [] as Hotel[];
+          })
+        : Promise.resolve([] as Hotel[]);
+      const osmPromise = fetchHotelsInRadius(c.lat, c.lng, radiusKm).catch((e) => {
+        console.warn('[overpass]', e);
+        return [] as Hotel[];
+      });
+      const [fsqResults, osmResults] = await Promise.all([fsqPromise, osmPromise]);
+
+      // Dedupe: FSQ primeiro pra prevalecer em duplicatas
+      const merged = mergeHotels([...fsqResults, ...osmResults]);
+
+      // Diagnóstico — visível na UI + console
+      console.group('[hotel-search]');
+      console.log('FSQ key set:', !!fsqKey);
+      console.log('Center:', c.lat.toFixed(5), c.lng.toFixed(5), '| radius:', radiusKm, 'km');
+      console.log('Foursquare returned:', fsqResults.length, fsqError ? `(error: ${fsqError})` : '');
+      console.log('OSM returned:', osmResults.length);
+      console.log('After merge:', merged.length);
+      const fioreze = merged.filter((h) => h.name.toLowerCase().includes('fioreze'));
+      if (fioreze.length) {
+        console.log('Fioreze entries:', fioreze.map((h) => `${h.name} [${h.id}]`));
       }
-      tasks.push(
-        fetchHotelsInRadius(c.lat, c.lng, radiusKm).catch((e) => {
-          console.warn('[overpass]', e);
-          return [];
-        }),
-      );
-      const results = await Promise.all(tasks);
-      const merged = mergeHotels(results.flat());
+      console.groupEnd();
+
+      setLastSearchSources({
+        foursquare: fsqResults.length,
+        osm: osmResults.length,
+        merged: merged.length,
+        fsqError,
+      });
+
       if (merged.length === 0) {
         throw new Error('Nenhum hotel encontrado nas fontes consultadas.');
       }

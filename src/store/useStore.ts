@@ -42,6 +42,13 @@ interface State {
   welcomeSeen: boolean;
   requestZoomOnNextLocation: boolean;
   flyToTarget?: { lat: number; lng: number; zoom?: number; ts: number };
+  // diagnóstico de busca: quantos vieram de cada fonte
+  lastSearchSources?: {
+    foursquare: number;
+    osm: number;
+    merged: number;
+    fsqError?: string;
+  };
 
   // auth actions
   setSession: (s: Session | null) => void;
@@ -81,6 +88,7 @@ interface State {
   requestLocationZoom: () => void;
   clearLocationZoomRequest: () => void;
   flyTo: (lat: number, lng: number, zoom?: number) => void;
+  setLastSearchSources: (s: State['lastSearchSources']) => void;
   reset: () => void;
 }
 
@@ -229,6 +237,7 @@ export const useStore = create<State>()(
       clearLocationZoomRequest: () => set({ requestZoomOnNextLocation: false }),
       flyTo: (lat, lng, zoom) =>
         set({ flyToTarget: { lat, lng, zoom, ts: Date.now() } }),
+      setLastSearchSources: (s) => set({ lastSearchSources: s }),
       reset: () => set({ hotels: [], route: undefined, selectedCity: undefined }),
     }),
     {

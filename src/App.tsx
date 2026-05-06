@@ -14,6 +14,7 @@ import { WelcomeDialog } from './components/WelcomeDialog';
 import { HotelSearch } from './components/HotelSearch';
 import { LoginPage } from './components/LoginPage';
 import { UsersPanel } from './components/UsersPanel';
+import { SearchSourcesBadge } from './components/SearchSourcesBadge';
 import { useStore } from './store/useStore';
 import { useLiveLocation } from './lib/useLiveLocation';
 import { supabase } from './lib/supabase';
@@ -111,12 +112,15 @@ export default function App() {
               <CitySearch />
 
               {hotels.length > 0 && (
-                <div className="text-[12px] text-ink-400 flex items-center gap-2">
-                  <Building2 className="w-3.5 h-3.5" />
-                  {hotels.length} hotéis •{' '}
-                  <span className="text-emerald-400">
-                    {hotelsWithGuests} com hóspedes
-                  </span>
+                <div className="text-[12px] text-ink-400 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-3.5 h-3.5" />
+                    {hotels.length} hotéis •{' '}
+                    <span className="text-emerald-400">
+                      {hotelsWithGuests} com hóspedes
+                    </span>
+                  </div>
+                  <SearchSourcesBadge />
                 </div>
               )}
 

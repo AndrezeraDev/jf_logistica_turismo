@@ -49,27 +49,39 @@ export function CitySearch() {
   async function loadHotels(city: City) {
     setHotelsLoading(true);
     setHotelsError(undefined);
+    const setLastSearchSources = useStore.getState().setLastSearchSources;
     try {
       const fsqKey = useStore.getState().settings.foursquareApiKey?.trim();
       const [south, north, west, east] = city.boundingBox;
-      // Foursquare primeiro (resultado mais preciso quando há key), OSM depois.
-      const tasks: Promise<Hotel[]>[] = [];
-      if (fsqKey) {
-        tasks.push(
-          fetchHotelsFsqBbox(fsqKey, south, west, north, east).catch((e) => {
-            console.warn('[foursquare]', e);
-            return [];
-          }),
-        );
-      }
-      tasks.push(
-        fetchHotelsInCity(city).catch((e) => {
-          console.warn('[overpass]', e);
-          return [];
-        }),
-      );
-      const results = await Promise.all(tasks);
-      const merged = mergeHotels(results.flat());
+      let fsqError: string | undefined;
+
+      const fsqPromise = fsqKey
+        ? fetchHotelsFsqBbox(fsqKey, south, west, north, east).catch((e) => {
+            fsqError = e instanceof Error ? e.message : String(e);
+            console.warn('[foursquare]', fsqError);
+            return [] as Hotel[];
+          })
+        : Promise.resolve([] as Hotel[]);
+      const osmPromise = fetchHotelsInCity(city).catch((e) => {
+        console.warn('[overpass]', e);
+        return [] as Hotel[];
+      });
+      const [fsqResults, osmResults] = await Promise.all([fsqPromise, osmPromise]);
+      const merged = mergeHotels([...fsqResults, ...osmResults]);
+
+      console.group('[city-search]');
+      console.log('FSQ key set:', !!fsqKey);
+      console.log('Foursquare:', fsqResults.length, fsqError ? `(error: ${fsqError})` : '');
+      console.log('OSM:', osmResults.length, '| merged:', merged.length);
+      console.groupEnd();
+
+      setLastSearchSources({
+        foursquare: fsqResults.length,
+        osm: osmResults.length,
+        merged: merged.length,
+        fsqError,
+      });
+
       setHotels(merged);
       markHotelsFetched();
     } catch (e) {
