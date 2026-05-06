@@ -43,7 +43,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const text = await upstream.text();
     res.status(upstream.status);
     res.setHeader('Content-Type', 'application/json');
-    // cache curto pra reduzir hits no Foursquare em buscas repetidas
+    // Repassa o Link header (cursor de paginação) — sem ele o cliente não consegue
+    // pegar a página seguinte.
+    const linkHeader = upstream.headers.get('link');
+    if (linkHeader) {
+      res.setHeader('Link', linkHeader);
+      res.setHeader('Access-Control-Expose-Headers', 'Link');
+    }
     if (upstream.ok) res.setHeader('Cache-Control', 'public, max-age=300');
     res.send(text);
   } catch (e) {

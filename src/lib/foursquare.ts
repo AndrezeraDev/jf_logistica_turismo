@@ -37,24 +37,20 @@ interface RawPlace {
   };
 }
 
-async function fsqSearch(apiKey: string, params: URLSearchParams): Promise<Hotel[]> {
-  params.set('fsq_category_ids', LODGING_CATEGORY_IDS);
-  params.set('limit', '50');
-  // CRUCIAL: sort=DISTANCE garante que os 50 mais PRÓXIMOS do centro voltem.
-  // Sem isso, FSQ ranqueia por "relevância" e em raios médios joga hotéis
-  // próximos pra fora do limite (ex: Hotel Fioreze Primo a 600m do centro
-  // não vinha em raio de 3km porque outros 50 "relevantes" passavam na frente).
-  params.set('sort', 'DISTANCE');
-  const url = `${FSQ_PROXY}?${params.toString()}`;
+// Quantas páginas de 50 baixar no máximo. 6 = 300 hotéis. Mais que suficiente
+// pra qualquer cidade turística — Gramado em raio 8km tem ~97.
+const FSQ_MAX_PAGES = 6;
 
+async function fsqFetchOne(
+  apiKey: string,
+  params: URLSearchParams,
+): Promise<{ hotels: Hotel[]; nextCursor?: string }> {
+  const url = `${FSQ_PROXY}?${params.toString()}`;
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), FSQ_TIMEOUT_MS);
   try {
     const res = await fetch(url, {
-      headers: {
-        'X-Fsq-Key': apiKey,
-        Accept: 'application/json',
-      },
+      headers: { 'X-Fsq-Key': apiKey, Accept: 'application/json' },
       signal: ctrl.signal,
     });
     if (!res.ok) {
@@ -62,10 +58,40 @@ async function fsqSearch(apiKey: string, params: URLSearchParams): Promise<Hotel
       throw new Error(`Foursquare HTTP ${res.status}: ${txt.slice(0, 180)}`);
     }
     const data = (await res.json()) as { results?: RawPlace[] };
-    return parseFsq(data.results || []);
+    const hotels = parseFsq(data.results || []);
+
+    // Cursor da próxima página vem no Link header em formato:
+    //   <https://...?cursor=XYZ&...>; rel="next"
+    let nextCursor: string | undefined;
+    const linkHeader = res.headers.get('link');
+    if (linkHeader && /rel="next"/i.test(linkHeader)) {
+      const m = linkHeader.match(/[?&]cursor=([^&>;\s]+)/);
+      if (m) nextCursor = decodeURIComponent(m[1]);
+    }
+    return { hotels, nextCursor };
   } finally {
     clearTimeout(t);
   }
+}
+
+async function fsqSearch(apiKey: string, params: URLSearchParams): Promise<Hotel[]> {
+  params.set('fsq_category_ids', LODGING_CATEGORY_IDS);
+  params.set('limit', '50');
+  // sort=DISTANCE garante que os 50 mais PRÓXIMOS do centro voltem na 1ª página.
+  // (Sem isso, FSQ ranqueia por "relevância" e pode tirar hotéis próximos do top 50.)
+  params.set('sort', 'DISTANCE');
+
+  const all: Hotel[] = [];
+  let cursor: string | undefined;
+  for (let page = 0; page < FSQ_MAX_PAGES; page++) {
+    const p = new URLSearchParams(params);
+    if (cursor) p.set('cursor', cursor);
+    const { hotels, nextCursor } = await fsqFetchOne(apiKey, p);
+    all.push(...hotels);
+    if (!nextCursor || hotels.length === 0) break;
+    cursor = nextCursor;
+  }
+  return all;
 }
 
 function parseFsq(results: RawPlace[]): Hotel[] {

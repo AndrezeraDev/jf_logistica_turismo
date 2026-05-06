@@ -33,6 +33,11 @@ const foursquareDevProxy: Plugin = {
         const text = await upstream.text();
         res.statusCode = upstream.status;
         res.setHeader('content-type', 'application/json');
+        const linkHeader = upstream.headers.get('link');
+        if (linkHeader) {
+          res.setHeader('link', linkHeader);
+          res.setHeader('access-control-expose-headers', 'link');
+        }
         res.end(text);
       } catch (e) {
         res.statusCode = 502;
