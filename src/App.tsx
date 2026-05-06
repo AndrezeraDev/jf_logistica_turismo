@@ -81,7 +81,7 @@ export default function App() {
     <>
       <div className="px-4 pt-4 pb-3 flex items-start justify-between">
         <div>
-          <div className="text-[11px] text-ink-400 uppercase tracking-[0.15em]">JF System</div>
+          <div className="text-[11px] text-ink-400 uppercase tracking-[0.15em]">JE Hoffman</div>
           <div className="text-[22px] font-semibold tracking-tight">
             {tab === 'map' && 'Logística turística'}
             {tab === 'fleet' && 'Frota da empresa'}

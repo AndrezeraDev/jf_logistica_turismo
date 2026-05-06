@@ -120,13 +120,13 @@ export function LoginPage() {
             transition={{ delay: 0.15, type: 'spring', stiffness: 280, damping: 16 }}
             className="w-14 h-14 rounded-2xl bg-gradient-to-b from-accent to-blue-600 flex items-center justify-center shadow-[0_10px_30px_rgba(10,132,255,0.55)] text-white font-bold text-lg tracking-tight"
           >
-            JF
+            JE
           </motion.div>
         </div>
 
         <div className="text-center">
           <div className="text-[11px] uppercase tracking-[0.2em] text-ink-400">
-            JF Logística
+            JE Hoffman Turismo
           </div>
           <h1 className="text-[22px] font-semibold tracking-tight mt-1">Entrar</h1>
           <p className="text-[12px] text-ink-400 mt-1">
@@ -222,7 +222,7 @@ export function LoginPage() {
         </div>
 
         <div className="mt-6 text-center text-[10px] text-ink-500">
-          © {new Date().getFullYear()} JF Logística
+          © {new Date().getFullYear()} JE Hoffman Turismo
         </div>
       </motion.div>
     </div>

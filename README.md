@@ -1,4 +1,4 @@
-# JF Logística Turística
+# JE Hoffman — Logística Turística
 
 Sistema de logística para transporte turístico: mapeia hotéis de uma cidade, permite atribuir hóspedes a cada hotel e calcula a rota ótima de coleta + retorno, sugerindo o veículo mais adequado da frota.
 
