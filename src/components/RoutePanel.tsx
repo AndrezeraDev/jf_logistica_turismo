@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
 import { useStore } from '../store/useStore';
-import { nearestNeighborOrder, nearestNeighborReturn } from '../lib/tsp';
+import { nearestNeighborOrder, nearestNeighborReturn, twoOpt } from '../lib/tsp';
 import { routeVia } from '../lib/osrm';
 import { suggestWithAI } from '../lib/openai';
 import { calcEconomy, formatBRL } from '../lib/economy';
@@ -49,15 +49,20 @@ export function RoutePanel() {
     try {
       const origin: LatLng = { lat: settings.origin.lat, lng: settings.origin.lng };
 
-      // 1) otimização pela heurística vizinho mais próximo
-      const stops = nearestNeighborOrder(origin, selected);
+      // 1) otimização: nearest-neighbor inicial + 2-opt local search.
+      //    NN é guloso e às vezes coloca um hotel "fácil" tarde demais.
+      //    2-opt corrige isso varrendo todas as trocas de arestas que reduzem distância.
+      const nnStops = nearestNeighborOrder(origin, selected);
+      const stops = twoOpt(origin, nnStops); // open path: origin fixo no início
       const last: LatLng = stops.length
         ? { lat: stops[stops.length - 1].lat, lng: stops[stops.length - 1].lng }
         : origin;
 
-      // 2) rota viária real de coleta + retorno em paralelo
+      // 2) retorno: NN partindo do último hotel + 2-opt com origem como end fixo
+      const nnReturn = nearestNeighborReturn(last, stops);
+      const returnStops = twoOpt(last, nnReturn, origin);
+
       const pickupPoints: LatLng[] = [origin, ...stops.map((s) => ({ lat: s.lat, lng: s.lng }))];
-      const returnStops = nearestNeighborReturn(last, stops);
       const returnPoints: LatLng[] = [
         last,
         ...returnStops.map((s) => ({ lat: s.lat, lng: s.lng })),
