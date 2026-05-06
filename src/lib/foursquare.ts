@@ -6,8 +6,18 @@ const FSQ_URL = 'https://places-api.foursquare.com/places/search';
 const FSQ_API_VERSION = '2025-06-17';
 const FSQ_TIMEOUT_MS = 12_000;
 
-// Categoria 19014 = Lodging (umbrella: hotel, hostel, B&B, motel, resort, etc).
-const LODGING_CATEGORY = '19014';
+// IDs v1 de categorias de hospedagem — o que de fato funciona na API atual.
+// (O id v2 `19014` retorna lugares fora de hospedagem; quase nenhum place no
+// banco do Foursquare foi re-tagueado com v2.)
+const LODGING_CATEGORY_IDS = [
+  '4bf58dd8d48988d1fa931735', // Hotel (inclui pousadas)
+  '4bf58dd8d48988d1ee931735', // Hostel
+  '4bf58dd8d48988d1fb931735', // Motel
+  '4bf58dd8d48988d1fc931735', // Bed & Breakfast
+  '4bf58dd8d48988d12f951735', // Resort
+  '4bf58dd8d48988d1f8931735', // Inn / Pousada
+  '56aa371be4b08b9a8d573547', // Vacation Rental
+].join(',');
 
 interface RawPlace {
   fsq_place_id?: string;
@@ -25,7 +35,7 @@ interface RawPlace {
 }
 
 async function fsqSearch(apiKey: string, params: URLSearchParams): Promise<Hotel[]> {
-  params.set('categories', LODGING_CATEGORY);
+  params.set('fsq_category_ids', LODGING_CATEGORY_IDS);
   params.set('limit', '50');
   const url = `${FSQ_URL}?${params.toString()}`;
 
