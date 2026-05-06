@@ -1,12 +1,25 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { Session } from '@supabase/supabase-js';
 import type { City, Hotel, Route, Settings, Vehicle } from '../types';
+import type { Profile } from '../lib/supabase';
+import {
+  schedulePushSettings,
+  pushVehicleInsert,
+  pushVehicleDelete,
+  pushVehicleUpdate,
+} from '../lib/sync';
 
 interface State {
+  // auth
+  session: Session | null;
+  profile: Profile | null;
+  authReady: boolean;
+
   // city & hotels
   selectedCity?: City;
   hotels: Hotel[];
-  selectedHotelIds: string[]; // hotéis com hóspedes atribuídos (guests > 0 after assignment)
+  selectedHotelIds: string[];
   // fleet
   vehicles: Vehicle[];
   // settings
@@ -30,7 +43,17 @@ interface State {
   requestZoomOnNextLocation: boolean;
   flyToTarget?: { lat: number; lng: number; zoom?: number; ts: number };
 
-  // actions
+  // auth actions
+  setSession: (s: Session | null) => void;
+  setProfile: (p: Profile | null) => void;
+  setAuthReady: (b: boolean) => void;
+  resetUserData: () => void;
+
+  // sync helpers
+  setVehicles: (vs: Vehicle[]) => void;
+  replaceSettings: (s: Settings) => void;
+
+  // domain actions
   setCity: (city: City | undefined) => void;
   setHotels: (hotels: Hotel[]) => void;
   updateHotelGuests: (id: string, guests: number) => void;
@@ -61,27 +84,30 @@ interface State {
   reset: () => void;
 }
 
-const id = () => Math.random().toString(36).slice(2, 10);
+const localId = () => Math.random().toString(36).slice(2, 10);
+const newUuid = () =>
+  typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : localId() + '-' + localId();
 
-const defaultVehicles: Vehicle[] = [
-  { id: id(), name: 'Carro Executivo', type: 'carro', capacity: 4 },
-  { id: id(), name: 'SUV 7 lugares', type: 'carro', capacity: 7 },
-  { id: id(), name: 'Van 15 lugares', type: 'van', capacity: 15 },
-  { id: id(), name: 'Micro-ônibus 30', type: 'micro-onibus', capacity: 30 },
-];
+const defaultSettings: Settings = {
+  openaiModel: 'gpt-4o-mini',
+  searchRadiusKm: 5,
+  showRadiusCircle: true,
+};
 
 export const useStore = create<State>()(
   persist(
     (set, get) => ({
+      session: null,
+      profile: null,
+      authReady: false,
+
       selectedCity: undefined,
       hotels: [],
       selectedHotelIds: [],
-      vehicles: defaultVehicles,
-      settings: {
-        openaiModel: 'gpt-4o-mini',
-        searchRadiusKm: 5,
-        showRadiusCircle: true,
-      },
+      vehicles: [],
+      settings: defaultSettings,
       route: undefined,
       aiLoading: false,
       aiError: undefined,
@@ -100,6 +126,25 @@ export const useStore = create<State>()(
       requestZoomOnNextLocation: false,
       flyToTarget: undefined,
 
+      setSession: (s) => set({ session: s }),
+      setProfile: (p) => set({ profile: p }),
+      setAuthReady: (b) => set({ authReady: b }),
+      resetUserData: () =>
+        set({
+          profile: null,
+          vehicles: [],
+          settings: defaultSettings,
+          hotels: [],
+          route: undefined,
+          selectedCity: undefined,
+          navigationMode: false,
+          liveTracking: false,
+          followMe: false,
+        }),
+
+      setVehicles: (vs) => set({ vehicles: vs }),
+      replaceSettings: (s) => set({ settings: s }),
+
       setCity: (city) => set({ selectedCity: city, hotels: [], route: undefined }),
       setHotels: (hotels) => set({ hotels }),
       updateHotelGuests: (hotelId, guests) => {
@@ -108,14 +153,36 @@ export const useStore = create<State>()(
         );
         set({ hotels, route: undefined });
       },
-      addVehicle: (v) => set({ vehicles: [...get().vehicles, { ...v, id: id() }] }),
-      updateVehicle: (vid, patch) =>
-        set({
-          vehicles: get().vehicles.map((v) => (v.id === vid ? { ...v, ...patch } : v)),
-        }),
-      removeVehicle: (vid) =>
-        set({ vehicles: get().vehicles.filter((v) => v.id !== vid) }),
-      setSettings: (patch) => set({ settings: { ...get().settings, ...patch } }),
+      addVehicle: (v) => {
+        const userId = get().session?.user.id;
+        const vehicle: Vehicle = { ...v, id: newUuid() };
+        set({ vehicles: [...get().vehicles, vehicle] });
+        if (userId) {
+          void pushVehicleInsert(userId, vehicle);
+        }
+      },
+      updateVehicle: (vid, patch) => {
+        const updated = get().vehicles.map((v) => (v.id === vid ? { ...v, ...patch } : v));
+        set({ vehicles: updated });
+        const v = updated.find((x) => x.id === vid);
+        if (v && get().session) {
+          void pushVehicleUpdate(v);
+        }
+      },
+      removeVehicle: (vid) => {
+        set({ vehicles: get().vehicles.filter((v) => v.id !== vid) });
+        if (get().session) {
+          void pushVehicleDelete(vid);
+        }
+      },
+      setSettings: (patch) => {
+        const next = { ...get().settings, ...patch };
+        set({ settings: next });
+        const userId = get().session?.user.id;
+        if (userId) {
+          schedulePushSettings(userId, next);
+        }
+      },
       setRoute: (r) => set({ route: r }),
       setAiLoading: (b) => set({ aiLoading: b }),
       setAiError: (e) => set({ aiError: e }),
@@ -126,7 +193,7 @@ export const useStore = create<State>()(
           hotels: [
             ...get().hotels,
             {
-              id: `manual-${id()}`,
+              id: `manual-${localId()}`,
               name: name.trim() || 'Hotel personalizado',
               lat,
               lng,
@@ -143,7 +210,6 @@ export const useStore = create<State>()(
         set({
           liveTracking: b,
           liveError: undefined,
-          // ao ligar tracking, segue automaticamente; ao desligar, para de seguir
           followMe: b ? true : false,
         }),
       setLiveAccuracy: (m) => set({ liveAccuracyM: m }),
@@ -166,12 +232,9 @@ export const useStore = create<State>()(
       reset: () => set({ hotels: [], route: undefined, selectedCity: undefined }),
     }),
     {
-      // bump da chave (jf-system → jf-system-v2) força reaparecer o welcome
-      // novo (marcar ponto de partida) pra usuários que já viam o antigo (GPS).
-      name: 'jf-system-v2',
+      // bump pra v3 — agora settings/vehicles vêm do Supabase, não persistimos local.
+      name: 'jf-system-v3',
       partialize: (s) => ({
-        vehicles: s.vehicles,
-        settings: s.settings,
         welcomeSeen: s.welcomeSeen,
         liveTracking: s.liveTracking,
       }),

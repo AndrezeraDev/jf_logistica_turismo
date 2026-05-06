@@ -12,8 +12,12 @@ import { RoutePanel } from './components/RoutePanel';
 import { NavigationOverlay } from './components/NavigationOverlay';
 import { WelcomeDialog } from './components/WelcomeDialog';
 import { HotelSearch } from './components/HotelSearch';
+import { LoginPage } from './components/LoginPage';
+import { UsersPanel } from './components/UsersPanel';
 import { useStore } from './store/useStore';
 import { useLiveLocation } from './lib/useLiveLocation';
+import { supabase } from './lib/supabase';
+import { hydrateFromSupabase } from './lib/sync';
 import type { Hotel } from './types';
 
 export default function App() {
@@ -31,8 +35,38 @@ export default function App() {
   const setAddingHotel = useStore((s) => s.setAddingHotel);
   const navigationMode = useStore((s) => s.navigationMode);
   const flyToMap = useStore((s) => s.flyTo);
+  const session = useStore((s) => s.session);
+  const authReady = useStore((s) => s.authReady);
+  const setSession = useStore((s) => s.setSession);
+  const setAuthReady = useStore((s) => s.setAuthReady);
+  const resetUserData = useStore((s) => s.resetUserData);
 
   useLiveLocation();
+
+  // Auth gate — sessão + hidratação inicial
+  useEffect(() => {
+    let mounted = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return;
+      setSession(data.session);
+      setAuthReady(true);
+      if (data.session) {
+        void hydrateFromSupabase(data.session.user.id);
+      }
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
+      setSession(sess);
+      if (sess) {
+        void hydrateFromSupabase(sess.user.id);
+      } else {
+        resetUserData();
+      }
+    });
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
+  }, [setSession, setAuthReady, resetUserData]);
 
   const hotelsWithGuests = useMemo(() => hotels.filter((h) => h.guests > 0).length, [hotels]);
 
@@ -51,6 +85,7 @@ export default function App() {
             {tab === 'map' && 'Logística turística'}
             {tab === 'fleet' && 'Frota da empresa'}
             {tab === 'settings' && 'Configurações'}
+            {tab === 'users' && 'Usuários'}
           </div>
         </div>
         <button
@@ -124,6 +159,17 @@ export default function App() {
               <SettingsPanel />
             </motion.div>
           )}
+          {tab === 'users' && (
+            <motion.div
+              key="users"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.2 }}
+            >
+              <UsersPanel />
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
 
@@ -133,6 +179,18 @@ export default function App() {
       </div>
     </>
   );
+
+  // Auth gates
+  if (!authReady) {
+    return (
+      <div className="h-full w-full flex items-center justify-center bg-[#0b0b0d] text-ink-400 text-[13px]">
+        Carregando…
+      </div>
+    );
+  }
+  if (!session) {
+    return <LoginPage />;
+  }
 
   return (
     <div className="h-full w-full flex bg-[#0b0b0d] text-ink-100 overflow-hidden">
