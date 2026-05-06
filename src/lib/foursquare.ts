@@ -147,6 +147,10 @@ async function fsqGridQuery(
     }
   }
   const results = await Promise.all(tasks);
+  const total = results.reduce((sum, r) => sum + r.length, 0);
+  console.log(
+    `[fsq grid] query="${query}" cells=${tasks.length} cellRadius=${cellRadiusKm.toFixed(2)}km totalResults=${total}`,
+  );
   return results.flat();
 }
 
@@ -165,26 +169,38 @@ async function fsqSearch(
     radius: String(Math.min(100_000, Math.max(50, Math.round(radiusKm * 1000)))),
   });
 
-  // Pra raios pequenos, dispensa o grid (1 chamada já cobre tudo)
+  console.log(
+    `[fsq] strategy: ${radiusKm > 2.5 ? 'GRID' : 'SIMPLE'} | center=${centerLat.toFixed(4)},${centerLng.toFixed(4)} | radius=${radiusKm}km`,
+  );
+
   if (radiusKm <= 2.5) {
     const [byCat, byHotel, byPousada] = await Promise.all([
       fsqByCategory(apiKey, baseParams),
       fsqByQueryAt(apiKey, centerLat, centerLng, Math.round(radiusKm * 1000), 'hotel').catch(
-        () => [] as Hotel[],
+        (e) => {
+          console.warn('[fsq] simple hotel query failed:', e);
+          return [] as Hotel[];
+        },
       ),
       fsqByQueryAt(apiKey, centerLat, centerLng, Math.round(radiusKm * 1000), 'pousada').catch(
-        () => [] as Hotel[],
+        (e) => {
+          console.warn('[fsq] simple pousada query failed:', e);
+          return [] as Hotel[];
+        },
       ),
     ]);
+    console.log(`[fsq] simple results: cat=${byCat.length} hotel=${byHotel.length} pousada=${byPousada.length}`);
     return [...byCat, ...byHotel, ...byPousada];
   }
 
-  // Raios maiores: grade pra contornar filtro de qualidade
   const [byCat, gridHotel, gridPousada] = await Promise.all([
     fsqByCategory(apiKey, baseParams),
     fsqGridQuery(apiKey, centerLat, centerLng, radiusKm, 'hotel'),
     fsqGridQuery(apiKey, centerLat, centerLng, radiusKm, 'pousada'),
   ]);
+  console.log(
+    `[fsq] grid results: cat=${byCat.length} gridHotel=${gridHotel.length} gridPousada=${gridPousada.length}`,
+  );
   return [...byCat, ...gridHotel, ...gridPousada];
 }
 
