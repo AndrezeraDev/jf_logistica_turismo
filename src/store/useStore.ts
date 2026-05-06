@@ -48,6 +48,9 @@ interface State {
     osm: number;
     merged: number;
     fsqError?: string;
+    fsqNames?: string[];
+    osmNames?: string[];
+    mergedNames?: string[];
   };
 
   // auth actions

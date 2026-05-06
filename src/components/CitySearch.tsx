@@ -80,6 +80,9 @@ export function CitySearch() {
         osm: osmResults.length,
         merged: merged.length,
         fsqError,
+        fsqNames: fsqResults.map((h) => h.name),
+        osmNames: osmResults.map((h) => h.name),
+        mergedNames: merged.map((h) => h.name),
       });
 
       setHotels(merged);

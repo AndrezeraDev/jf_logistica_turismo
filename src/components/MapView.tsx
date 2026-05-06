@@ -479,6 +479,9 @@ export function MapView({
         osm: osmResults.length,
         merged: merged.length,
         fsqError,
+        fsqNames: fsqResults.map((h) => h.name),
+        osmNames: osmResults.map((h) => h.name),
+        mergedNames: merged.map((h) => h.name),
       });
 
       if (merged.length === 0) {
