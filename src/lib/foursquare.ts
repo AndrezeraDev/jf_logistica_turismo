@@ -74,11 +74,14 @@ async function fsqFetchOne(
   }
 }
 
-async function fsqSearch(apiKey: string, params: URLSearchParams): Promise<Hotel[]> {
+/** Busca paginada filtrando pelas categorias de hospedagem. Retorna até 300. */
+async function fsqByCategory(
+  apiKey: string,
+  baseParams: URLSearchParams,
+): Promise<Hotel[]> {
+  const params = new URLSearchParams(baseParams);
   params.set('fsq_category_ids', LODGING_CATEGORY_IDS);
   params.set('limit', '50');
-  // sort=DISTANCE garante que os 50 mais PRÓXIMOS do centro voltem na 1ª página.
-  // (Sem isso, FSQ ranqueia por "relevância" e pode tirar hotéis próximos do top 50.)
   params.set('sort', 'DISTANCE');
 
   const all: Hotel[] = [];
@@ -92,6 +95,97 @@ async function fsqSearch(apiKey: string, params: URLSearchParams): Promise<Hotel
     cursor = nextCursor;
   }
   return all;
+}
+
+/** Busca por palavra no nome SEM filtro de categoria, num ponto específico.
+ *  Foursquare tem filtro de "qualidade" silencioso que esconde alguns hotéis em
+ *  áreas grandes — em raios pequenos eles voltam.   */
+async function fsqByQueryAt(
+  apiKey: string,
+  lat: number,
+  lng: number,
+  radiusM: number,
+  query: string,
+): Promise<Hotel[]> {
+  const params = new URLSearchParams({
+    ll: `${lat},${lng}`,
+    radius: String(radiusM),
+    query,
+    limit: '50',
+    sort: 'DISTANCE',
+  });
+  const { hotels } = await fsqFetchOne(apiKey, params);
+  return hotels;
+}
+
+/** Faz uma grade de sub-buscas com `query` em células pequenas pra contornar
+ *  o filtro de qualidade do FSQ, que oculta hotéis em buscas amplas.
+ *  Grid 4x4 = 16 células com sobreposição. */
+async function fsqGridQuery(
+  apiKey: string,
+  centerLat: number,
+  centerLng: number,
+  radiusKm: number,
+  query: string,
+): Promise<Hotel[]> {
+  const GRID = 4;
+  // Raio da célula com sobreposição de ~25%
+  const cellRadiusKm = Math.max(1.5, (radiusKm / GRID) * 1.5);
+  const dLatTotal = radiusKm / 111;
+  const dLngTotal = radiusKm / (111 * Math.cos((centerLat * Math.PI) / 180));
+
+  const tasks: Promise<Hotel[]>[] = [];
+  for (let i = 0; i < GRID; i++) {
+    for (let j = 0; j < GRID; j++) {
+      const lat = centerLat - dLatTotal + ((i + 0.5) * (2 * dLatTotal)) / GRID;
+      const lng = centerLng - dLngTotal + ((j + 0.5) * (2 * dLngTotal)) / GRID;
+      tasks.push(
+        fsqByQueryAt(apiKey, lat, lng, Math.round(cellRadiusKm * 1000), query).catch(
+          () => [] as Hotel[],
+        ),
+      );
+    }
+  }
+  const results = await Promise.all(tasks);
+  return results.flat();
+}
+
+/** Combina:
+ *  1) busca por categoria com paginação (até 300, FSQ ranqueia "hotéis principais")
+ *  2) grade de sub-buscas por palavra-chave (pega hotéis "ocultos" pelo FSQ)
+ *  Caller dedupa via mergeHotels. */
+async function fsqSearch(
+  apiKey: string,
+  centerLat: number,
+  centerLng: number,
+  radiusKm: number,
+): Promise<Hotel[]> {
+  const baseParams = new URLSearchParams({
+    ll: `${centerLat},${centerLng}`,
+    radius: String(Math.min(100_000, Math.max(50, Math.round(radiusKm * 1000)))),
+  });
+
+  // Pra raios pequenos, dispensa o grid (1 chamada já cobre tudo)
+  if (radiusKm <= 2.5) {
+    const [byCat, byHotel, byPousada] = await Promise.all([
+      fsqByCategory(apiKey, baseParams),
+      fsqByQueryAt(apiKey, centerLat, centerLng, Math.round(radiusKm * 1000), 'hotel').catch(
+        () => [] as Hotel[],
+      ),
+      fsqByQueryAt(apiKey, centerLat, centerLng, Math.round(radiusKm * 1000), 'pousada').catch(
+        () => [] as Hotel[],
+      ),
+    ]);
+    return [...byCat, ...byHotel, ...byPousada];
+  }
+
+  // Raios maiores: grade pra contornar filtro de qualidade
+  const [byCat, gridHotel, gridPousada] = await Promise.all([
+    fsqByCategory(apiKey, baseParams),
+    fsqGridQuery(apiKey, centerLat, centerLng, radiusKm, 'hotel'),
+    fsqGridQuery(apiKey, centerLat, centerLng, radiusKm, 'pousada'),
+  ]);
+  return [...byCat, ...gridHotel, ...gridPousada];
 }
 
 function parseFsq(results: RawPlace[]): Hotel[] {
@@ -121,9 +215,7 @@ export async function fetchHotelsFsqRadius(
   lng: number,
   radiusKm: number,
 ): Promise<Hotel[]> {
-  const radius = Math.min(100_000, Math.max(50, Math.round(radiusKm * 1000)));
-  const params = new URLSearchParams({ ll: `${lat},${lng}`, radius: String(radius) });
-  return fsqSearch(apiKey, params);
+  return fsqSearch(apiKey, lat, lng, radiusKm);
 }
 
 export async function fetchHotelsFsqBbox(
@@ -133,9 +225,14 @@ export async function fetchHotelsFsqBbox(
   north: number,
   east: number,
 ): Promise<Hotel[]> {
-  const params = new URLSearchParams({
-    ne: `${north},${east}`,
-    sw: `${south},${west}`,
-  });
-  return fsqSearch(apiKey, params);
+  // Converte bbox em centro+raio aproximado pra reusar a estratégia spatial
+  const lat = (north + south) / 2;
+  const lng = (east + west) / 2;
+  const halfDiagKm =
+    Math.sqrt(
+      Math.pow(((north - south) / 2) * 111, 2) +
+        Math.pow(((east - west) / 2) * 111 * Math.cos((lat * Math.PI) / 180), 2),
+    );
+  return fsqSearch(apiKey, lat, lng, Math.min(50, halfDiagKm));
 }
+
