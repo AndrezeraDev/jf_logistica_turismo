@@ -54,6 +54,7 @@ export interface Settings {
   openaiApiKey?: string;
   openaiModel?: string;
   orsApiKey?: string; // OpenRouteService
+  foursquareApiKey?: string; // Foursquare Places (cobertura extra de hotéis)
   origin?: LatLng & { label?: string };
   searchRadiusKm?: number;
   showRadiusCircle?: boolean;

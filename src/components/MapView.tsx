@@ -4,6 +4,8 @@ import { Search, Loader2, LocateFixed, Locate } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { reverseGeocode } from '../lib/nominatim';
 import { fetchHotelsInRadius } from '../lib/overpass';
+import { fetchHotelsFsqRadius } from '../lib/foursquare';
+import { mergeHotels } from '../lib/mergeHotels';
 import type { Hotel, Route } from '../types';
 
 // Fix leaflet default icon paths (we don't use them, but just in case)
@@ -438,8 +440,28 @@ export function MapView({
     setHotelsLoading(true);
     setHotelsError(undefined);
     try {
-      const hs = await fetchHotelsInRadius(c.lat, c.lng, radiusKm);
-      setHotels(hs);
+      const fsqKey = useStore.getState().settings.foursquareApiKey?.trim();
+      // OSM (Overpass) sempre, Foursquare só se houver key. Em paralelo.
+      const tasks: Promise<Hotel[]>[] = [
+        fetchHotelsInRadius(c.lat, c.lng, radiusKm).catch((e) => {
+          console.warn('[overpass]', e);
+          return [];
+        }),
+      ];
+      if (fsqKey) {
+        tasks.push(
+          fetchHotelsFsqRadius(fsqKey, c.lat, c.lng, radiusKm).catch((e) => {
+            console.warn('[foursquare]', e);
+            return [];
+          }),
+        );
+      }
+      const results = await Promise.all(tasks);
+      const merged = mergeHotels(results.flat());
+      if (merged.length === 0) {
+        throw new Error('Nenhum hotel encontrado nas fontes consultadas.');
+      }
+      setHotels(merged);
       markHotelsFetched();
     } catch (e) {
       setHotelsError(

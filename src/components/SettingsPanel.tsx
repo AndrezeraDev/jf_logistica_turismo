@@ -12,6 +12,7 @@ import {
   Radius,
   Route as RouteIcon,
   Radar,
+  Building2,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from './ui/Button';
@@ -30,6 +31,7 @@ export function SettingsPanel() {
   const liveError = useStore((s) => s.liveError);
   const [keyVisible, setKeyVisible] = useState(false);
   const [orsKeyVisible, setOrsKeyVisible] = useState(false);
+  const [fsqKeyVisible, setFsqKeyVisible] = useState(false);
   const [locating, setLocating] = useState(false);
   const [geoError, setGeoError] = useState<string | undefined>();
   const [manualLat, setManualLat] = useState(settings.origin?.lat.toString() ?? '');
@@ -358,6 +360,51 @@ export function SettingsPanel() {
             />
             Mostrar círculo de alcance no mapa
           </label>
+        </div>
+      </Card>
+
+      <Card
+        title="Cobertura de hotéis"
+        subtitle="Foursquare como fonte extra (cobre o que falta no OpenStreetMap)"
+        action={<Building2 className="w-4 h-4 text-ink-400" />}
+      >
+        <div className="space-y-2">
+          <div className="relative">
+            <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-400" />
+            <Input
+              type={fsqKeyVisible ? 'text' : 'password'}
+              placeholder="Foursquare Service API key"
+              value={settings.foursquareApiKey || ''}
+              onChange={(e) => setSettings({ foursquareApiKey: e.target.value })}
+              className="pl-9 pr-10 font-mono text-[12px]"
+            />
+            <button
+              onClick={() => setFsqKeyVisible((v) => !v)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg flex items-center justify-center text-ink-400 hover:text-ink-100"
+            >
+              {fsqKeyVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+          <div className="text-[11px] text-ink-400 leading-relaxed">
+            {settings.foursquareApiKey?.trim() ? (
+              <span className="text-emerald-400">
+                ✓ Foursquare ativo — busca hotéis em paralelo com OSM e dedupica
+              </span>
+            ) : (
+              <>
+                Sem key = só OSM (pode faltar hotéis). Pegue uma grátis em{' '}
+                <a
+                  href="https://foursquare.com/developers/projects"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-accent underline"
+                >
+                  foursquare.com/developers
+                </a>{' '}
+                — 100k chamadas/mês, sem cartão.
+              </>
+            )}
+          </div>
         </div>
       </Card>
 

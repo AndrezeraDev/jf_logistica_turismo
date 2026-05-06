@@ -4,8 +4,10 @@ import { Input } from './ui/Input';
 import { Button } from './ui/Button';
 import { searchCity } from '../lib/nominatim';
 import { fetchHotelsInCity } from '../lib/overpass';
+import { fetchHotelsFsqBbox } from '../lib/foursquare';
+import { mergeHotels } from '../lib/mergeHotels';
 import { useStore } from '../store/useStore';
-import type { City } from '../types';
+import type { City, Hotel } from '../types';
 import { AnimatePresence, motion } from 'framer-motion';
 
 export function CitySearch() {
@@ -48,8 +50,25 @@ export function CitySearch() {
     setHotelsLoading(true);
     setHotelsError(undefined);
     try {
-      const hs = await fetchHotelsInCity(city);
-      setHotels(hs);
+      const fsqKey = useStore.getState().settings.foursquareApiKey?.trim();
+      const [south, north, west, east] = city.boundingBox;
+      const tasks: Promise<Hotel[]>[] = [
+        fetchHotelsInCity(city).catch((e) => {
+          console.warn('[overpass]', e);
+          return [];
+        }),
+      ];
+      if (fsqKey) {
+        tasks.push(
+          fetchHotelsFsqBbox(fsqKey, south, west, north, east).catch((e) => {
+            console.warn('[foursquare]', e);
+            return [];
+          }),
+        );
+      }
+      const results = await Promise.all(tasks);
+      const merged = mergeHotels(results.flat());
+      setHotels(merged);
       markHotelsFetched();
     } catch (e) {
       setHotelsError(
