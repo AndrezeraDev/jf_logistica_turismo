@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Plus, Trash2, Bus, Car } from 'lucide-react';
+import { Plus, Trash2, Bus, Car, Fuel } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Card } from './ui/Card';
 import { useStore } from '../store/useStore';
+import { defaultConsumption } from '../lib/economy';
 import type { Vehicle } from '../types';
 
 const TYPES: Array<{ v: Vehicle['type']; label: string }> = [
@@ -18,19 +19,28 @@ const TYPES: Array<{ v: Vehicle['type']; label: string }> = [
 export function FleetPanel() {
   const vehicles = useStore((s) => s.vehicles);
   const addVehicle = useStore((s) => s.addVehicle);
+  const updateVehicle = useStore((s) => s.updateVehicle);
   const removeVehicle = useStore((s) => s.removeVehicle);
 
   const [name, setName] = useState('');
   const [type, setType] = useState<Vehicle['type']>('van');
   const [capacity, setCapacity] = useState('15');
+  const [consumption, setConsumption] = useState('');
 
   function submit() {
     const n = name.trim() || defaultName(type, parseInt(capacity, 10));
     const cap = parseInt(capacity, 10);
     if (!Number.isFinite(cap) || cap <= 0) return;
-    addVehicle({ name: n, type, capacity: cap });
+    const c = parseFloat(consumption.replace(',', '.'));
+    addVehicle({
+      name: n,
+      type,
+      capacity: cap,
+      fuelConsumptionKmL: Number.isFinite(c) && c > 0 ? c : undefined,
+    });
     setName('');
     setCapacity('15');
+    setConsumption('');
     setType('van');
   }
 
@@ -52,8 +62,30 @@ export function FleetPanel() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-[13px] text-ink-100 truncate">{v.name}</div>
-                <div className="text-[11px] text-ink-400">
-                  {v.type} • {v.capacity} lugares
+                <div className="text-[11px] text-ink-400 flex items-center gap-2">
+                  <span>
+                    {v.type} • {v.capacity} lug.
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Fuel className="w-3 h-3" />
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0.1"
+                      value={v.fuelConsumptionKmL ?? ''}
+                      placeholder={String(defaultConsumption(v.type))}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value.replace(',', '.'));
+                        updateVehicle(v.id, {
+                          fuelConsumptionKmL:
+                            Number.isFinite(val) && val > 0 ? val : undefined,
+                        });
+                      }}
+                      className="w-12 bg-white/[0.04] border border-white/10 rounded px-1 text-[10px] text-ink-200 focus:outline-none focus:border-accent/60"
+                      title={`km/L (default ${defaultConsumption(v.type)})`}
+                    />
+                    <span>km/L</span>
+                  </span>
                 </div>
               </div>
               <button
@@ -91,7 +123,18 @@ export function FleetPanel() {
             min={1}
             value={capacity}
             onChange={(e) => setCapacity(e.target.value)}
-            className="w-24 text-center"
+            className="w-20 text-center"
+            placeholder="lug."
+          />
+          <Input
+            type="number"
+            step="0.1"
+            min={0.1}
+            value={consumption}
+            onChange={(e) => setConsumption(e.target.value)}
+            className="w-20 text-center"
+            placeholder={`${defaultConsumption(type)} km/L`}
+            title="Consumo em km/L (opcional, usa default por tipo)"
           />
         </div>
         <Button onClick={submit} variant="secondary" size="sm" className="w-full">

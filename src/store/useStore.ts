@@ -105,6 +105,7 @@ const defaultSettings: Settings = {
   openaiModel: 'gpt-4o-mini',
   searchRadiusKm: 5,
   showRadiusCircle: true,
+  fuelPricePerLiter: 6.0,
 };
 
 export const useStore = create<State>()(

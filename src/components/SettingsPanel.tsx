@@ -13,6 +13,7 @@ import {
   Route as RouteIcon,
   Radar,
   Building2,
+  Fuel,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from './ui/Button';
@@ -360,6 +361,28 @@ export function SettingsPanel() {
             />
             Mostrar círculo de alcance no mapa
           </label>
+        </div>
+      </Card>
+
+      <Card
+        title="Combustível"
+        subtitle="Preço usado no cálculo de custo da rota"
+        action={<Fuel className="w-4 h-4 text-ink-400" />}
+      >
+        <div className="flex items-center gap-3">
+          <div className="text-[12px] text-ink-400">R$</div>
+          <Input
+            type="number"
+            step="0.01"
+            min={0}
+            value={settings.fuelPricePerLiter ?? 6.0}
+            onChange={(e) => {
+              const v = parseFloat(e.target.value.replace(',', '.'));
+              setSettings({ fuelPricePerLiter: Number.isFinite(v) && v >= 0 ? v : 0 });
+            }}
+            className="flex-1 text-center font-mono"
+          />
+          <div className="text-[12px] text-ink-400">/ L</div>
         </div>
       </Card>
 

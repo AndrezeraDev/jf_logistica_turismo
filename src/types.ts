@@ -17,6 +17,7 @@ export interface Vehicle {
   name: string;
   type: 'carro' | 'van' | 'micro-onibus' | 'onibus' | 'outro';
   capacity: number;
+  fuelConsumptionKmL?: number; // km/L. Se null, usa default por tipo.
 }
 
 export interface City {
@@ -58,4 +59,5 @@ export interface Settings {
   origin?: LatLng & { label?: string };
   searchRadiusKm?: number;
   showRadiusCircle?: boolean;
+  fuelPricePerLiter?: number; // R$/L
 }

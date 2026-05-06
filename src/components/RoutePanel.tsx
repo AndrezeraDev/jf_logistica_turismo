@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Play, Loader2, Sparkles, Navigation, Gauge, Timer, Users, Bus, AlertTriangle } from 'lucide-react';
+import { Play, Loader2, Sparkles, Navigation, Gauge, Timer, Users, Bus, AlertTriangle, Fuel, TrendingDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
@@ -7,6 +7,7 @@ import { useStore } from '../store/useStore';
 import { nearestNeighborOrder, nearestNeighborReturn } from '../lib/tsp';
 import { routeVia } from '../lib/osrm';
 import { suggestWithAI } from '../lib/openai';
+import { calcEconomy, formatBRL } from '../lib/economy';
 import type { Hotel, LatLng, Route } from '../types';
 
 export function RoutePanel() {
@@ -192,6 +193,8 @@ export function RoutePanel() {
                 <Stat icon={<Users className="w-3.5 h-3.5" />} label="Pax" value={`${route.totalGuests}`} />
               </div>
 
+              <EconomyCard route={route} />
+
               <div className="space-y-1.5 max-h-56 overflow-auto pr-1">
                 <div className="text-[11px] text-ink-400 uppercase tracking-wider px-1">
                   <Navigation className="w-3 h-3 inline mr-1" /> Coleta
@@ -258,6 +261,56 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
         {icon} {label}
       </div>
       <div className="text-[14px] font-semibold text-ink-100 mt-0.5">{value}</div>
+    </div>
+  );
+}
+
+function EconomyCard({ route }: { route: Route }) {
+  const vehicles = useStore((s) => s.vehicles);
+  const fuelPrice = useStore((s) => s.settings.fuelPricePerLiter ?? 6.0);
+  const vehicle = vehicles.find((v) => v.id === route.suggestedVehicleId);
+  const eco = calcEconomy(route, vehicle, fuelPrice);
+
+  return (
+    <div className="mb-3 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] overflow-hidden">
+      <div className="px-3 py-2 flex items-center gap-2 border-b border-emerald-500/15">
+        <TrendingDown className="w-3.5 h-3.5 text-emerald-400" />
+        <span className="text-[11px] uppercase tracking-wider text-emerald-300 flex-1">
+          Economia
+        </span>
+        <span className="text-[11px] text-ink-400">
+          {eco.consumptionKmL.toFixed(1)} km/L · {formatBRL(fuelPrice)}/L
+        </span>
+      </div>
+      <div className="px-3 py-2.5 grid grid-cols-2 gap-x-3 gap-y-1.5 text-[12px]">
+        <div className="flex items-center gap-1.5 text-ink-300">
+          <Fuel className="w-3 h-3 text-ink-400" />
+          Custo da rota
+        </div>
+        <div className="text-right font-semibold text-ink-100">
+          {formatBRL(eco.fuelCost)}
+        </div>
+
+        <div className="text-ink-400 text-[11px]">
+          Sem otimização
+        </div>
+        <div className="text-right text-ink-400 text-[11px] line-through">
+          {formatBRL(eco.naiveFuelCost)}
+        </div>
+
+        <div className="text-emerald-300 col-span-2 mt-1 pt-2 border-t border-emerald-500/15">
+          <div className="flex items-baseline justify-between">
+            <span className="text-[11px] uppercase tracking-wider">Você poupa</span>
+            <span className="text-[15px] font-semibold">
+              {formatBRL(eco.savedMoney)}
+            </span>
+          </div>
+          <div className="flex items-baseline justify-between text-[11px] text-emerald-400/80 mt-0.5">
+            <span>{eco.savedKm.toFixed(1)} km a menos</span>
+            <span>−{eco.savedPercent.toFixed(0)}%</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -23,6 +23,7 @@ export async function hydrateFromSupabase(userId: string) {
     name: v.name,
     type: v.type,
     capacity: v.capacity,
+    fuelConsumptionKmL: v.fuel_consumption_kml ?? undefined,
   }));
   store.setVehicles(vehicles);
 
@@ -39,6 +40,7 @@ export async function hydrateFromSupabase(userId: string) {
       openaiModel: s.openai_model || 'gpt-4o-mini',
       orsApiKey: s.ors_api_key || undefined,
       foursquareApiKey: s.foursquare_api_key || undefined,
+      fuelPricePerLiter: s.fuel_price_per_liter ?? 6.0,
     };
     store.replaceSettings(newSettings);
   }
@@ -62,6 +64,7 @@ export function schedulePushSettings(userId: string | undefined, settings: Setti
           openai_model: settings.openaiModel ?? 'gpt-4o-mini',
           ors_api_key: settings.orsApiKey ?? null,
           foursquare_api_key: settings.foursquareApiKey ?? null,
+          fuel_price_per_liter: settings.fuelPricePerLiter ?? 6.0,
           updated_at: new Date().toISOString(),
         },
         { onConflict: 'user_id' },
@@ -79,6 +82,7 @@ export async function pushVehicleInsert(userId: string, vehicle: Vehicle): Promi
     name: vehicle.name,
     type: vehicle.type,
     capacity: vehicle.capacity,
+    fuel_consumption_kml: vehicle.fuelConsumptionKmL ?? null,
   });
   if (error) console.error('[sync] vehicle insert:', error.message);
 }
@@ -91,7 +95,12 @@ export async function pushVehicleDelete(id: string): Promise<void> {
 export async function pushVehicleUpdate(vehicle: Vehicle): Promise<void> {
   const { error } = await supabase
     .from('vehicles')
-    .update({ name: vehicle.name, type: vehicle.type, capacity: vehicle.capacity })
+    .update({
+      name: vehicle.name,
+      type: vehicle.type,
+      capacity: vehicle.capacity,
+      fuel_consumption_kml: vehicle.fuelConsumptionKmL ?? null,
+    })
     .eq('id', vehicle.id);
   if (error) console.error('[sync] vehicle update:', error.message);
 }
