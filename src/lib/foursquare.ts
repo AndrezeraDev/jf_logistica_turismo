@@ -40,6 +40,11 @@ interface RawPlace {
 async function fsqSearch(apiKey: string, params: URLSearchParams): Promise<Hotel[]> {
   params.set('fsq_category_ids', LODGING_CATEGORY_IDS);
   params.set('limit', '50');
+  // CRUCIAL: sort=DISTANCE garante que os 50 mais PRÓXIMOS do centro voltem.
+  // Sem isso, FSQ ranqueia por "relevância" e em raios médios joga hotéis
+  // próximos pra fora do limite (ex: Hotel Fioreze Primo a 600m do centro
+  // não vinha em raio de 3km porque outros 50 "relevantes" passavam na frente).
+  params.set('sort', 'DISTANCE');
   const url = `${FSQ_PROXY}?${params.toString()}`;
 
   const ctrl = new AbortController();
