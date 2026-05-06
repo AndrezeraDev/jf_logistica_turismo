@@ -1,9 +1,12 @@
 import type { Hotel } from '../types';
 
-// Service API (Bearer key — gerada no developer.foursquare.com).
-// Endpoint novo (a partir de 2024): places-api.foursquare.com/places/search
-const FSQ_URL = 'https://places-api.foursquare.com/places/search';
-const FSQ_API_VERSION = '2025-06-17';
+// IMPORTANTE: o endpoint atual da Foursquare (places-api.foursquare.com) NÃO
+// envia headers CORS, então não dá pra chamar direto do browser.
+// Usamos um proxy serverless em /api/foursquare-search (Vercel Function) que
+// faz a chamada server-side e devolve o JSON. Isso evita CORS e mantém a key
+// fora dos logs públicos do Foursquare (a key continua no localStorage do user,
+// trafega só do front pro próprio backend deles).
+const FSQ_PROXY = '/api/foursquare-search';
 const FSQ_TIMEOUT_MS = 12_000;
 
 // IDs v1 de categorias de hospedagem — o que de fato funciona na API atual.
@@ -37,15 +40,14 @@ interface RawPlace {
 async function fsqSearch(apiKey: string, params: URLSearchParams): Promise<Hotel[]> {
   params.set('fsq_category_ids', LODGING_CATEGORY_IDS);
   params.set('limit', '50');
-  const url = `${FSQ_URL}?${params.toString()}`;
+  const url = `${FSQ_PROXY}?${params.toString()}`;
 
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), FSQ_TIMEOUT_MS);
   try {
     const res = await fetch(url, {
       headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'X-Places-Api-Version': FSQ_API_VERSION,
+        'X-Fsq-Key': apiKey,
         Accept: 'application/json',
       },
       signal: ctrl.signal,
