@@ -52,12 +52,8 @@ export function CitySearch() {
     try {
       const fsqKey = useStore.getState().settings.foursquareApiKey?.trim();
       const [south, north, west, east] = city.boundingBox;
-      const tasks: Promise<Hotel[]>[] = [
-        fetchHotelsInCity(city).catch((e) => {
-          console.warn('[overpass]', e);
-          return [];
-        }),
-      ];
+      // Foursquare primeiro (resultado mais preciso quando há key), OSM depois.
+      const tasks: Promise<Hotel[]>[] = [];
       if (fsqKey) {
         tasks.push(
           fetchHotelsFsqBbox(fsqKey, south, west, north, east).catch((e) => {
@@ -66,6 +62,12 @@ export function CitySearch() {
           }),
         );
       }
+      tasks.push(
+        fetchHotelsInCity(city).catch((e) => {
+          console.warn('[overpass]', e);
+          return [];
+        }),
+      );
       const results = await Promise.all(tasks);
       const merged = mergeHotels(results.flat());
       setHotels(merged);

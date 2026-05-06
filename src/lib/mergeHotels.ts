@@ -27,8 +27,10 @@ function similarName(a: string, b: string): boolean {
   const na = normalize(a);
   const nb = normalize(b);
   if (!na || !nb) return false;
-  if (na === nb) return true;
-  return na.includes(nb) || nb.includes(na);
+  // Match EXATO após normalização. Antes usávamos `includes` mas isso
+  // engolia variantes legítimas (ex: "Hotel Fioreze Primo" sumia se
+  // o OSM tinha um "Hotel Fioreze" próximo).
+  return na === nb;
 }
 
 function normalize(s: string): string {

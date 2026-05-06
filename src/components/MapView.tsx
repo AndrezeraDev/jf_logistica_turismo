@@ -441,13 +441,9 @@ export function MapView({
     setHotelsError(undefined);
     try {
       const fsqKey = useStore.getState().settings.foursquareApiKey?.trim();
-      // OSM (Overpass) sempre, Foursquare só se houver key. Em paralelo.
-      const tasks: Promise<Hotel[]>[] = [
-        fetchHotelsInRadius(c.lat, c.lng, radiusKm).catch((e) => {
-          console.warn('[overpass]', e);
-          return [];
-        }),
-      ];
+      // Foursquare PRIMEIRO (nomes/endereços melhores quando disponível) +
+      // OSM como complemento. Dedupe mantém o primeiro visto = Foursquare.
+      const tasks: Promise<Hotel[]>[] = [];
       if (fsqKey) {
         tasks.push(
           fetchHotelsFsqRadius(fsqKey, c.lat, c.lng, radiusKm).catch((e) => {
@@ -456,6 +452,12 @@ export function MapView({
           }),
         );
       }
+      tasks.push(
+        fetchHotelsInRadius(c.lat, c.lng, radiusKm).catch((e) => {
+          console.warn('[overpass]', e);
+          return [];
+        }),
+      );
       const results = await Promise.all(tasks);
       const merged = mergeHotels(results.flat());
       if (merged.length === 0) {
