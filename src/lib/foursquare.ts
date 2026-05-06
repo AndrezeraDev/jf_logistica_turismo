@@ -120,7 +120,8 @@ async function fsqByQueryAt(
 
 /** Faz uma grade de sub-buscas com `query` em células pequenas pra contornar
  *  o filtro de qualidade do FSQ, que oculta hotéis em buscas amplas.
- *  Grid 4x4 = 16 células com sobreposição. */
+ *  Grid 5x5 = 25 células com sobreposição alta — Foursquare ranqueia muito
+ *  instavelmente, então usamos cells pequenas (2km) e bem espalhadas. */
 async function fsqGridQuery(
   apiKey: string,
   centerLat: number,
@@ -128,9 +129,9 @@ async function fsqGridQuery(
   radiusKm: number,
   query: string,
 ): Promise<Hotel[]> {
-  const GRID = 4;
-  // Raio da célula com sobreposição de ~25%
-  const cellRadiusKm = Math.max(1.5, (radiusKm / GRID) * 1.5);
+  // Densidade da grade depende do raio. Em raios grandes precisamos mais cells.
+  const GRID = radiusKm <= 4 ? 3 : radiusKm <= 8 ? 5 : 7;
+  const cellRadiusKm = 2.0; // sempre 2km — ponto ótimo onde FSQ não filtra
   const dLatTotal = radiusKm / 111;
   const dLngTotal = radiusKm / (111 * Math.cos((centerLat * Math.PI) / 180));
 
