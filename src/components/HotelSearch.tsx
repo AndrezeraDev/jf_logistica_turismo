@@ -78,47 +78,19 @@ export function HotelSearch({ onPick }: { onPick: (h: Hotel) => void }) {
 
   return (
     <>
-      {/* Botão lupa — expande temporariamente mostrando "Procurar hotéis"
-          como dica de descoberta na primeira vez que aparece. */}
-      <motion.button
+      {/* Botão lupa — sempre visível com label "Procurar hotéis".
+          Pulse sutil + glow azul nos primeiros segundos pra chamar atenção. */}
+      <button
         onClick={() => setOpen(true)}
         aria-label="Procurar hotel"
-        className="absolute top-[148px] left-4 z-[1000] glass rounded-full h-11 flex items-center shadow-glass text-ink-100 hover:bg-white/[0.12] overflow-hidden md:top-4 md:left-auto md:right-[210px]"
-        animate={{
-          boxShadow: hint
-            ? '0 8px 24px rgba(10,132,255,0.45), 0 1px 0 rgba(255,255,255,0.06) inset'
-            : '0 1px 0 rgba(255,255,255,0.04) inset, 0 10px 30px rgba(0,0,0,0.35)',
-        }}
-        transition={{ duration: 0.4 }}
+        className={`absolute top-[148px] left-4 z-[1000] glass rounded-full h-11 flex items-center gap-2 pl-3 pr-4 shadow-glass text-ink-100 hover:bg-white/[0.12] transition-shadow md:top-4 md:left-auto md:right-[210px]
+          ${hint ? 'shadow-[0_0_0_4px_rgba(10,132,255,0.18),0_10px_30px_rgba(10,132,255,0.45)]' : ''}`}
       >
-        <div className="w-11 h-11 flex items-center justify-center flex-shrink-0">
-          <motion.div
-            animate={
-              hint
-                ? { rotate: [0, -12, 12, 0], scale: [1, 1.15, 1.15, 1] }
-                : { rotate: 0, scale: 1 }
-            }
-            transition={{ duration: 0.6, times: [0, 0.3, 0.6, 1] }}
-          >
-            <Search className="w-5 h-5 md:w-4 md:h-4" />
-          </motion.div>
-        </div>
-        <AnimatePresence initial={false}>
-          {hint && (
-            <motion.div
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 132, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
-              className="overflow-hidden"
-            >
-              <span className="block whitespace-nowrap text-[13px] font-medium pr-3">
-                Procurar hotéis
-              </span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.button>
+        <Search
+          className={`w-4 h-4 transition-transform ${hint ? 'animate-pulse' : ''}`}
+        />
+        <span className="text-[13px] font-medium whitespace-nowrap">Procurar hotéis</span>
+      </button>
 
       <AnimatePresence>
         {open && (

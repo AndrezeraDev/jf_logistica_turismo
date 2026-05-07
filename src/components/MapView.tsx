@@ -158,12 +158,21 @@ export function MapView({
     hotelLayerRef.current = L.layerGroup().addTo(map);
     routeLayerRef.current = L.layerGroup().addTo(map);
 
-    // mostra o botão "buscar nesta área" quando o usuário move/zooma o mapa
+    // mostra o botão "buscar nesta área" quando o usuário move/zooma o mapa.
+    // Throttle do `move` event com rAF — sem isso, em mobile o drag fica travado
+    // (cada pixel de pan dispara React re-render + recria circle SVG).
     map.on('moveend', () => {
       setShowAreaBtn(map.getZoom() >= 10);
       setCenterTick((t) => t + 1);
     });
-    map.on('move', () => setCenterTick((t) => t + 1));
+    let rafId = 0;
+    map.on('move', () => {
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        setCenterTick((t) => t + 1);
+        rafId = 0;
+      });
+    });
     // atualiza tamanho dos ícones conforme zoom
     map.on('zoomend', () => {
       setHotelSize(hotelIconSize(map.getZoom()));
@@ -467,26 +476,35 @@ export function MapView({
     };
   }, [showTrafficOverlay, tomtomApiKey]);
 
-  // Radius circle — segue o centro do mapa
+  // Radius circle — segue o centro do mapa.
+  // Otimização: ao invés de remover/recriar a cada move (caro em mobile,
+  // travava o drag), reaproveita o mesmo L.circle e só atualiza latLng/radius.
   useEffect(() => {
     const map = mapInst.current;
     if (!map) return;
-    if (radiusCircleRef.current) {
-      map.removeLayer(radiusCircleRef.current);
-      radiusCircleRef.current = null;
+    if (!showRadiusCircle) {
+      if (radiusCircleRef.current) {
+        map.removeLayer(radiusCircleRef.current);
+        radiusCircleRef.current = null;
+      }
+      return;
     }
-    if (!showRadiusCircle) return;
     const c = map.getCenter();
-    radiusCircleRef.current = L.circle([c.lat, c.lng], {
-      radius: radiusKm * 1000,
-      color: '#0A84FF',
-      weight: 1.5,
-      opacity: 0.55,
-      fillColor: '#0A84FF',
-      fillOpacity: 0.06,
-      dashArray: '6 8',
-      interactive: false,
-    }).addTo(map);
+    if (radiusCircleRef.current) {
+      radiusCircleRef.current.setLatLng([c.lat, c.lng]);
+      radiusCircleRef.current.setRadius(radiusKm * 1000);
+    } else {
+      radiusCircleRef.current = L.circle([c.lat, c.lng], {
+        radius: radiusKm * 1000,
+        color: '#0A84FF',
+        weight: 1.5,
+        opacity: 0.55,
+        fillColor: '#0A84FF',
+        fillOpacity: 0.06,
+        dashArray: '6 8',
+        interactive: false,
+      }).addTo(map);
+    }
   }, [radiusKm, showRadiusCircle, centerTick]);
 
   // External flyTo trigger (lupa de busca, etc) — disparado via store
