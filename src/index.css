@@ -81,6 +81,24 @@ body,
   height: 100%;
 }
 
+html {
+  /* iOS landscape: evita auto-resize do texto */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* desabilita callout (long-press → menu de cópia) em UI elements */
+  -webkit-touch-callout: none;
+}
+
+/* Inputs/selects/textareas: remove o "tap zoom" do iOS quando o font-size < 16px.
+   Como nossos inputs usam font sizes menores (12-14px), isso evita o zoom indesejado
+   sem precisar aumentar o font-size da UI. */
+input,
+select,
+textarea,
+button {
+  touch-action: manipulation;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', Inter, system-ui,
