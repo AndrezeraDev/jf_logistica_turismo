@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Navigation, Play, X, MapPin, CheckCircle2 } from 'lucide-react';
+import { Navigation, Play, X, MapPin, CheckCircle2, Share2 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { haversineKm } from '../lib/geo';
+import { RouteShareModal } from './RouteShareModal';
 
 export function NavigationOverlay() {
   const route = useStore((s) => s.route);
@@ -12,6 +13,8 @@ export function NavigationOverlay() {
   const currentStopIndex = useStore((s) => s.currentStopIndex);
   const setCurrentStopIndex = useStore((s) => s.setCurrentStopIndex);
   const origin = useStore((s) => s.settings.origin);
+  const liveTracking = useStore((s) => s.liveTracking);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const allStops = useMemo(
     () => (route ? [...route.stops, ...route.returnStops] : []),
@@ -30,15 +33,16 @@ export function NavigationOverlay() {
     );
   }, [nextStop, origin]);
 
-  // Botão flutuante "Iniciar rota" — só quando há rota e ainda não estamos navegando
-  const showStartButton = !!route && !navigationMode;
+  // Após calcular rota: se GPS ativo, mostra "Iniciar rota" (modo navegação live).
+  // Se GPS desativado, mostra "Compartilhar rota" (planejamento sem dirigir agora).
+  const showActionButton = !!route && !navigationMode;
 
   return (
     <>
       <AnimatePresence>
-        {showStartButton && (
+        {showActionButton && (
           <motion.div
-            key="start-route-btn"
+            key="action-btn"
             initial={{ opacity: 0, y: 30, scale: 0.92 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.92 }}
@@ -46,19 +50,34 @@ export function NavigationOverlay() {
             className="absolute left-1/2 -translate-x-1/2 bottom-6 z-[1100]"
             style={{ paddingBottom: 'env(safe-area-inset-bottom, 0)' }}
           >
-            <button
-              onClick={startNavigation}
-              className="flex items-center gap-2.5 h-14 px-7 rounded-full text-[15px] font-semibold
-                bg-gradient-to-b from-accent to-blue-600 text-white
-                shadow-[0_10px_30px_rgba(10,132,255,0.55)]
-                hover:brightness-110 active:scale-[0.98] transition-all"
-            >
-              <Play className="w-4 h-4" fill="currentColor" />
-              Iniciar rota
-            </button>
+            {liveTracking ? (
+              <button
+                onClick={startNavigation}
+                className="flex items-center gap-2.5 h-14 px-7 rounded-full text-[15px] font-semibold
+                  bg-gradient-to-b from-accent to-blue-600 text-white
+                  shadow-[0_10px_30px_rgba(10,132,255,0.55)]
+                  hover:brightness-110 active:scale-[0.98] transition-all"
+              >
+                <Play className="w-4 h-4" fill="currentColor" />
+                Iniciar rota
+              </button>
+            ) : (
+              <button
+                onClick={() => setShareOpen(true)}
+                className="flex items-center gap-2.5 h-14 px-7 rounded-full text-[15px] font-semibold
+                  bg-gradient-to-b from-accent to-blue-600 text-white
+                  shadow-[0_10px_30px_rgba(10,132,255,0.55)]
+                  hover:brightness-110 active:scale-[0.98] transition-all"
+              >
+                <Share2 className="w-4 h-4" />
+                Compartilhar rota
+              </button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
+
+      <RouteShareModal open={shareOpen} onClose={() => setShareOpen(false)} />
 
       <AnimatePresence>
         {navigationMode && route && (
