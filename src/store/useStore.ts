@@ -276,6 +276,12 @@ export const useStore = create<State>()(
         welcomeSeen: s.welcomeSeen,
         liveTracking: s.liveTracking,
         theme: s.theme,
+        // Persiste a última busca pra sobreviver reload — sem isso, ao recarregar
+        // a página o usuário precisa buscar de novo e a lupa some (pq depende de
+        // hotels.length > 0).
+        hotels: s.hotels,
+        selectedCity: s.selectedCity,
+        hotelsFetchedAt: s.hotelsFetchedAt,
       }),
       onRehydrateStorage: () => (state) => {
         // aplica o tema no <html> assim que o storage é hidratado
