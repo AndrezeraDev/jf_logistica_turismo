@@ -60,6 +60,7 @@ export interface Settings {
   tomtomApiKey?: string; // TomTom (rotas com trânsito real-time)
   showTrafficOverlay?: boolean; // toggle pra mostrar overlay de trânsito no mapa
   origin?: LatLng & { label?: string };
+  destination?: LatLng & { label?: string }; // saída da cidade / fim da viagem
   searchRadiusKm?: number;
   showRadiusCircle?: boolean;
   fuelPricePerLiter?: number; // R$/L

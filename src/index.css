@@ -306,6 +306,18 @@ body {
   box-shadow: 0 0 0 6px rgba(10, 132, 255, 0.25), 0 6px 18px rgba(0, 0, 0, 0.45);
   box-sizing: border-box;
 }
+
+/* Destination marker — bolinha vermelha (saída/fim da viagem) */
+.destination-pin {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #ff3b30;
+  box-shadow: 0 0 0 6px rgba(255, 59, 48, 0.28), 0 6px 18px rgba(0, 0, 0, 0.45);
+  box-sizing: border-box;
+}
 .me-pin.live::after {
   content: '';
   position: absolute;

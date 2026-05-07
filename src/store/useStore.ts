@@ -29,6 +29,7 @@ interface State {
   aiLoading: boolean;
   aiError?: string;
   pickingOrigin: boolean;
+  pickingDestination: boolean;
   addingHotel: boolean;
   hotelsLoading: boolean;
   hotelsError?: string;
@@ -76,6 +77,7 @@ interface State {
   setAiLoading: (b: boolean) => void;
   setAiError: (e: string | undefined) => void;
   setPickingOrigin: (b: boolean) => void;
+  setPickingDestination: (b: boolean) => void;
   setAddingHotel: (b: boolean) => void;
   addManualHotel: (h: { name: string; lat: number; lng: number; guests: number }) => void;
   setHotelsLoading: (b: boolean) => void;
@@ -127,6 +129,7 @@ export const useStore = create<State>()(
       aiLoading: false,
       aiError: undefined,
       pickingOrigin: false,
+      pickingDestination: false,
       addingHotel: false,
       hotelsLoading: false,
       hotelsError: undefined,
@@ -203,6 +206,7 @@ export const useStore = create<State>()(
       setAiLoading: (b) => set({ aiLoading: b }),
       setAiError: (e) => set({ aiError: e }),
       setPickingOrigin: (b) => set({ pickingOrigin: b }),
+      setPickingDestination: (b) => set({ pickingDestination: b }),
       setAddingHotel: (b) => set({ addingHotel: b }),
       addManualHotel: ({ name, lat, lng, guests }) =>
         set({

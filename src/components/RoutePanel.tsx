@@ -48,30 +48,52 @@ export function RoutePanel() {
     setRouteError(undefined);
     try {
       const origin: LatLng = { lat: settings.origin.lat, lng: settings.origin.lng };
+      const dest: LatLng | null = settings.destination
+        ? { lat: settings.destination.lat, lng: settings.destination.lng }
+        : null;
 
-      // 1) otimização: nearest-neighbor inicial + 2-opt local search.
-      //    NN é guloso e às vezes coloca um hotel "fácil" tarde demais.
-      //    2-opt corrige isso varrendo todas as trocas de arestas que reduzem distância.
+      // Modo "viagem one-way": tem destino → rota = origin → pickups → destination.
+      //   Não há leg de retorno; ordem dos pickups otimizada pra minimizar
+      //   distância total considerando o destino como end fixo.
+      // Modo clássico: sem destino → origin → pickups → drop-off (return) → origin.
       const nnStops = nearestNeighborOrder(origin, selected);
-      const stops = twoOpt(origin, nnStops); // open path: origin fixo no início
+      const stops = dest
+        ? twoOpt(origin, nnStops, dest) // closed path com destino como fim
+        : twoOpt(origin, nnStops); // open path
       const last: LatLng = stops.length
         ? { lat: stops[stops.length - 1].lat, lng: stops[stops.length - 1].lng }
         : origin;
 
-      // 2) retorno: NN partindo do último hotel + 2-opt com origem como end fixo
-      const nnReturn = nearestNeighborReturn(last, stops);
-      const returnStops = twoOpt(last, nnReturn, origin);
-
-      const pickupPoints: LatLng[] = [origin, ...stops.map((s) => ({ lat: s.lat, lng: s.lng }))];
-      const returnPoints: LatLng[] = [
-        last,
-        ...returnStops.map((s) => ({ lat: s.lat, lng: s.lng })),
+      const pickupPoints: LatLng[] = [
         origin,
+        ...stops.map((s) => ({ lat: s.lat, lng: s.lng })),
+        ...(dest ? [dest] : []),
       ];
+
+      let returnStops: typeof stops = [];
+      let returnPoints: LatLng[] = [];
+      if (!dest) {
+        const nnReturn = nearestNeighborReturn(last, stops);
+        returnStops = twoOpt(last, nnReturn, origin);
+        returnPoints = [
+          last,
+          ...returnStops.map((s) => ({ lat: s.lat, lng: s.lng })),
+          origin,
+        ];
+      }
 
       const [pickup, back] = await Promise.all([
         routeVia(pickupPoints, settings.orsApiKey, settings.tomtomApiKey),
-        routeVia(returnPoints, settings.orsApiKey, settings.tomtomApiKey),
+        returnPoints.length > 0
+          ? routeVia(returnPoints, settings.orsApiKey, settings.tomtomApiKey)
+          : Promise.resolve({
+              polyline: [],
+              distanceKm: 0,
+              durationMin: 0,
+              usedFallback: false,
+              engine: undefined,
+              trafficDelayMin: 0,
+            }),
       ]);
 
       const r: Route = {

@@ -34,6 +34,14 @@ export async function hydrateFromSupabase(userId: string) {
         s.origin_lat != null && s.origin_lng != null
           ? { lat: s.origin_lat, lng: s.origin_lng, label: s.origin_label || '' }
           : undefined,
+      destination:
+        s.destination_lat != null && s.destination_lng != null
+          ? {
+              lat: s.destination_lat,
+              lng: s.destination_lng,
+              label: s.destination_label || '',
+            }
+          : undefined,
       searchRadiusKm: s.search_radius_km ?? 5,
       showRadiusCircle: s.show_radius_circle ?? true,
       openaiApiKey: s.openai_api_key || undefined,
@@ -60,6 +68,9 @@ export function schedulePushSettings(userId: string | undefined, settings: Setti
           origin_lat: settings.origin?.lat ?? null,
           origin_lng: settings.origin?.lng ?? null,
           origin_label: settings.origin?.label ?? null,
+          destination_lat: settings.destination?.lat ?? null,
+          destination_lng: settings.destination?.lng ?? null,
+          destination_label: settings.destination?.label ?? null,
           search_radius_km: settings.searchRadiusKm ?? 5,
           show_radius_circle: settings.showRadiusCircle ?? true,
           openai_api_key: settings.openaiApiKey ?? null,

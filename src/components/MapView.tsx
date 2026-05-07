@@ -60,6 +60,15 @@ function meIcon(live = false): L.DivIcon {
   });
 }
 
+function destinationIcon(): L.DivIcon {
+  return L.divIcon({
+    className: '',
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
+    html: `<div class="destination-pin"></div>`,
+  });
+}
+
 export function MapView({
   onHotelClick,
   onAddHotelAt,
@@ -72,6 +81,7 @@ export function MapView({
   const hotelLayerRef = useRef<L.LayerGroup | null>(null);
   const routeLayerRef = useRef<L.LayerGroup | null>(null);
   const originMarkerRef = useRef<L.Marker | null>(null);
+  const destinationMarkerRef = useRef<L.Marker | null>(null);
   const accuracyCircleRef = useRef<L.Circle | null>(null);
   const radiusCircleRef = useRef<L.Circle | null>(null);
   const trafficLayerRef = useRef<L.TileLayer | null>(null);
@@ -88,6 +98,9 @@ export function MapView({
   const origin = useStore((s) => s.settings.origin);
   const pickingOrigin = useStore((s) => s.pickingOrigin);
   const setPickingOrigin = useStore((s) => s.setPickingOrigin);
+  const pickingDestination = useStore((s) => s.pickingDestination);
+  const setPickingDestination = useStore((s) => s.setPickingDestination);
+  const destination = useStore((s) => s.settings.destination);
   const addingHotel = useStore((s) => s.addingHotel);
   const setAddingHotel = useStore((s) => s.setAddingHotel);
   const setSettings = useStore((s) => s.setSettings);
@@ -221,12 +234,15 @@ export function MapView({
     });
   }, [hotels, route, hotelSize]);
 
-  // Picking origin mode — change cursor + capture next click
+  // Picking origin mode — change cursor + capture next click.
+  // Após salvar origem, encadeia automático com pickingDestination se o usuário
+  // ainda não tem destino configurado (welcome / primeiro setup).
   useEffect(() => {
     const map = mapInst.current;
     if (!map) return;
     const container = map.getContainer();
-    container.style.cursor = pickingOrigin || addingHotel ? 'crosshair' : '';
+    container.style.cursor =
+      pickingOrigin || pickingDestination || addingHotel ? 'crosshair' : '';
     if (!pickingOrigin) return;
     const handler = async (e: L.LeafletMouseEvent) => {
       const lat = e.latlng.lat;
@@ -238,7 +254,40 @@ export function MapView({
         origin: {
           lat,
           lng,
-          label: label.split(',').slice(0, 2).join(',') || `${lat.toFixed(4)}, ${lng.toFixed(4)}`,
+          label:
+            label.split(',').slice(0, 2).join(',') ||
+            `${lat.toFixed(4)}, ${lng.toFixed(4)}`,
+        },
+      });
+      // Chain: se ainda não há destino, pede pra marcar a saída em seguida.
+      if (!useStore.getState().settings.destination) {
+        // pequeno delay pra UI processar o origin antes de mudar o banner
+        setTimeout(() => useStore.getState().setPickingDestination(true), 150);
+      }
+    };
+    map.on('click', handler);
+    return () => {
+      map.off('click', handler);
+    };
+  }, [pickingOrigin, pickingDestination, addingHotel, setPickingOrigin, setSettings]);
+
+  // Picking destination mode — captura o próximo click e salva como destino.
+  useEffect(() => {
+    const map = mapInst.current;
+    if (!map || !pickingDestination) return;
+    const handler = async (e: L.LeafletMouseEvent) => {
+      const lat = e.latlng.lat;
+      const lng = e.latlng.lng;
+      setPickingDestination(false);
+      setSettings({ destination: { lat, lng, label: 'Marcando…' } });
+      const label = await reverseGeocode(lat, lng);
+      setSettings({
+        destination: {
+          lat,
+          lng,
+          label:
+            label.split(',').slice(0, 2).join(',') ||
+            `${lat.toFixed(4)}, ${lng.toFixed(4)}`,
         },
       });
     };
@@ -246,7 +295,7 @@ export function MapView({
     return () => {
       map.off('click', handler);
     };
-  }, [pickingOrigin, addingHotel, setPickingOrigin, setSettings]);
+  }, [pickingDestination, setPickingDestination, setSettings]);
 
   // Adding-hotel mode — next click opens the new-hotel modal
   useEffect(() => {
@@ -359,6 +408,33 @@ export function MapView({
     clearLocationZoomRequest,
     navigationMode,
   ]);
+
+  // Destination marker (bolinha vermelha) — sem flicker
+  useEffect(() => {
+    const map = mapInst.current;
+    if (!map) return;
+    if (!destination) {
+      if (destinationMarkerRef.current) {
+        map.removeLayer(destinationMarkerRef.current);
+        destinationMarkerRef.current = null;
+      }
+      return;
+    }
+    const latLng: L.LatLngTuple = [destination.lat, destination.lng];
+    if (destinationMarkerRef.current) {
+      destinationMarkerRef.current.setLatLng(latLng);
+    } else {
+      destinationMarkerRef.current = L.marker(latLng, {
+        icon: destinationIcon(),
+        zIndexOffset: 950,
+      })
+        .bindTooltip(destination.label || 'Saída / fim da viagem', {
+          direction: 'top',
+          offset: [0, -8],
+        })
+        .addTo(map);
+    }
+  }, [destination]);
 
   // Traffic overlay (TomTom) — toggle nas Configurações
   useEffect(() => {

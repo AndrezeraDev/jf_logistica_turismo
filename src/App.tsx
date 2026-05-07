@@ -32,6 +32,8 @@ export default function App() {
   const addManualHotel = useStore((s) => s.addManualHotel);
   const pickingOrigin = useStore((s) => s.pickingOrigin);
   const setPickingOrigin = useStore((s) => s.setPickingOrigin);
+  const pickingDestination = useStore((s) => s.pickingDestination);
+  const setPickingDestination = useStore((s) => s.setPickingDestination);
   const addingHotel = useStore((s) => s.addingHotel);
   const setAddingHotel = useStore((s) => s.setAddingHotel);
   const navigationMode = useStore((s) => s.navigationMode);
@@ -74,8 +76,8 @@ export default function App() {
   // Quando entra em modo "marcar no mapa" / "adicionar hotel", fecha o drawer
   // automaticamente (no mobile) pra deixar o mapa visível.
   useEffect(() => {
-    if (pickingOrigin || addingHotel) setDrawerOpen(false);
-  }, [pickingOrigin, addingHotel]);
+    if (pickingOrigin || pickingDestination || addingHotel) setDrawerOpen(false);
+  }, [pickingOrigin, pickingDestination, addingHotel]);
 
   const panelContent = (
     <>
@@ -259,6 +261,7 @@ export default function App() {
         <AnimatePresence>
           {pickingOrigin && (
             <motion.div
+              key="pick-origin"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
@@ -271,6 +274,26 @@ export default function App() {
                 className="ml-2 text-ink-400 hover:text-ink-100 text-[11px] flex-shrink-0"
               >
                 cancelar
+              </button>
+            </motion.div>
+          )}
+          {pickingDestination && (
+            <motion.div
+              key="pick-destination"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] glass rounded-full px-4 py-2 text-[12px] flex items-center gap-2 shadow-glass max-w-[calc(100vw-32px)]"
+            >
+              <span className="w-3.5 h-3.5 rounded-full bg-red-500 border-2 border-white flex-shrink-0 shadow-[0_0_0_2px_rgba(255,59,48,0.3)]" />
+              <span className="truncate">
+                Agora marque a saída — fim da viagem (bolinha vermelha)
+              </span>
+              <button
+                onClick={() => setPickingDestination(false)}
+                className="ml-2 text-ink-400 hover:text-ink-100 text-[11px] flex-shrink-0"
+              >
+                pular
               </button>
             </motion.div>
           )}
