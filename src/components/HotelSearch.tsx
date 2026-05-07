@@ -11,22 +11,25 @@ export function HotelSearch({ onPick }: { onPick: (h: Hotel) => void }) {
   const [q, setQ] = useState('');
   const [hint, setHint] = useState(false); // controla animação "lupa → texto → lupa"
   const inputRef = useRef<HTMLInputElement>(null);
+  const drawerOpen = useStore((s) => s.drawerOpen);
+  const STORAGE_KEY = 'hotelSearchHintedV2';
 
-  // Anima o botão (descoberta) só uma vez por sessão.
+  // Anima o botão (descoberta) só uma vez por sessão E SOMENTE quando o
+  // drawer mobile está fechado (caso contrário rodaria atrás da gaveta e
+  // o usuário não veria nada).
   useEffect(() => {
-    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('hotelSearchHinted')) {
-      return;
-    }
-    if (typeof sessionStorage !== 'undefined') {
-      sessionStorage.setItem('hotelSearchHinted', '1');
-    }
-    const t1 = setTimeout(() => setHint(true), 1200);
-    const t2 = setTimeout(() => setHint(false), 1200 + 3200);
+    if (drawerOpen) return;
+    if (typeof sessionStorage === 'undefined') return;
+    if (sessionStorage.getItem(STORAGE_KEY)) return;
+    // marca como visto SÓ quando vai realmente animar
+    sessionStorage.setItem(STORAGE_KEY, '1');
+    const t1 = setTimeout(() => setHint(true), 800);
+    const t2 = setTimeout(() => setHint(false), 800 + 3200);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
     };
-  }, []);
+  }, [drawerOpen]);
 
   useEffect(() => {
     if (open) {
