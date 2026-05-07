@@ -14,15 +14,14 @@ export function HotelSearch({ onPick }: { onPick: (h: Hotel) => void }) {
   const drawerOpen = useStore((s) => s.drawerOpen);
   const hasAnimatedRef = useRef(false);
 
-  // Anima o botão na 1ª vez que o drawer fecha após este componente montar
-  // (= cada vez que hotéis são carregados novos no app).
-  // Sem gate persistente: usa ref local — repete em novos mounts.
+  // Anima o botão na 1ª vez que o drawer fecha após este componente montar:
+  // abre mostrando "Procurar hotéis", segura 5s aberto, depois colapsa só pra ícone.
   useEffect(() => {
     if (drawerOpen) return;
     if (hasAnimatedRef.current) return;
     hasAnimatedRef.current = true;
-    const t1 = setTimeout(() => setHint(true), 700);
-    const t2 = setTimeout(() => setHint(false), 700 + 3500);
+    const t1 = setTimeout(() => setHint(true), 400); // pequena espera pra o usuário ver abrindo
+    const t2 = setTimeout(() => setHint(false), 400 + 5000); // 5 segundos aberto
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
@@ -78,18 +77,40 @@ export function HotelSearch({ onPick }: { onPick: (h: Hotel) => void }) {
 
   return (
     <>
-      {/* Botão lupa — sempre visível com label "Procurar hotéis".
-          Pulse sutil + glow azul nos primeiros segundos pra chamar atenção. */}
+      {/* Botão lupa — abre mostrando "Procurar hotéis", segura 5s e colapsa só pra ícone. */}
       <button
         onClick={() => setOpen(true)}
         aria-label="Procurar hotel"
-        className={`absolute top-[148px] left-4 z-[1000] glass rounded-full h-11 flex items-center gap-2 pl-3 pr-4 shadow-glass text-ink-100 hover:bg-white/[0.12] transition-shadow md:top-4 md:left-auto md:right-[210px]
-          ${hint ? 'shadow-[0_0_0_4px_rgba(10,132,255,0.18),0_10px_30px_rgba(10,132,255,0.45)]' : ''}`}
+        className={`absolute top-[148px] left-4 z-[1000] glass rounded-full h-11 flex items-center shadow-glass text-ink-100 hover:bg-white/[0.12] overflow-hidden md:top-4 md:left-auto md:right-[210px] transition-shadow duration-300
+          ${hint ? 'shadow-[0_0_0_4px_rgba(10,132,255,0.20),0_12px_36px_rgba(10,132,255,0.55)]' : ''}`}
       >
-        <Search
-          className={`w-4 h-4 transition-transform ${hint ? 'animate-pulse' : ''}`}
-        />
-        <span className="text-[13px] font-medium whitespace-nowrap">Procurar hotéis</span>
+        <div className="w-11 h-11 flex items-center justify-center flex-shrink-0">
+          <motion.div
+            animate={hint ? { rotate: [0, -10, 10, 0], scale: [1, 1.12, 1.12, 1] } : {}}
+            transition={{ duration: 0.6, times: [0, 0.3, 0.6, 1] }}
+          >
+            <Search className="w-4 h-4" />
+          </motion.div>
+        </div>
+        <AnimatePresence initial={false}>
+          {hint && (
+            <motion.div
+              key="hint-label"
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 132, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{
+                width: { duration: 0.32, ease: [0.4, 0, 0.2, 1] },
+                opacity: { duration: 0.22 },
+              }}
+              style={{ overflow: 'hidden' }}
+            >
+              <span className="block whitespace-nowrap text-[13px] font-medium pr-3 pl-1">
+                Procurar hotéis
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </button>
 
       <AnimatePresence>
