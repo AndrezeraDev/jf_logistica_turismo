@@ -32,9 +32,11 @@ export function Sidebar({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void })
 
   return (
     <aside className="w-[72px] flex-shrink-0 border-r border-white/5 bg-black/30 backdrop-blur-xl flex flex-col items-center py-4 gap-1">
-      <div className="w-10 h-10 rounded-2xl bg-gradient-to-b from-accent to-blue-600 shadow-[0_6px_18px_rgba(10,132,255,0.45)] flex items-center justify-center text-white font-bold text-sm mb-2">
-        JE
-      </div>
+      <img
+        src="/logo.png"
+        alt="JE Hoffmann Turismo"
+        className="w-10 h-10 rounded-2xl object-cover shadow-[0_6px_18px_rgba(10,132,255,0.45)] mb-2"
+      />
       {items.map((it) => {
         const active = tab === it.key;
         return (

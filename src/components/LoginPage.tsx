@@ -114,14 +114,14 @@ export function LoginPage() {
         className="relative glass rounded-3xl p-7 sm:p-8 max-w-sm w-full mx-4 shadow-glass z-10"
       >
         <div className="flex justify-center mb-5">
-          <motion.div
+          <motion.img
+            src="/logo.png"
+            alt="JE Hoffmann Turismo"
             initial={{ scale: 0.5, opacity: 0, rotate: -10 }}
             animate={{ scale: 1, opacity: 1, rotate: 0 }}
             transition={{ delay: 0.15, type: 'spring', stiffness: 280, damping: 16 }}
-            className="w-14 h-14 rounded-2xl bg-gradient-to-b from-accent to-blue-600 flex items-center justify-center shadow-[0_10px_30px_rgba(10,132,255,0.55)] text-white font-bold text-lg tracking-tight"
-          >
-            JE
-          </motion.div>
+            className="w-20 h-20 rounded-full object-cover shadow-[0_10px_30px_rgba(10,132,255,0.55)]"
+          />
         </div>
 
         <div className="text-center">
