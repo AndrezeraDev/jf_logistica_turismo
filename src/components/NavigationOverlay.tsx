@@ -42,15 +42,16 @@ export function NavigationOverlay() {
       <AnimatePresence>
         {showActionButton && (
           <motion.div
-            key="action-btn"
+            key="action-btns"
             initial={{ opacity: 0, y: 30, scale: 0.92 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.92 }}
             transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-            className="absolute left-1/2 -translate-x-1/2 bottom-6 z-[1100]"
+            className="absolute left-1/2 -translate-x-1/2 bottom-6 z-[1100] flex items-center gap-2"
             style={{ paddingBottom: 'env(safe-area-inset-bottom, 0)' }}
           >
-            {liveTracking ? (
+            {/* Iniciar rota — só quando GPS ativo (modo motorista live) */}
+            {liveTracking && (
               <button
                 onClick={startNavigation}
                 className="flex items-center gap-2.5 h-14 px-7 rounded-full text-[15px] font-semibold
@@ -61,18 +62,21 @@ export function NavigationOverlay() {
                 <Play className="w-4 h-4" fill="currentColor" />
                 Iniciar rota
               </button>
-            ) : (
-              <button
-                onClick={() => setShareOpen(true)}
-                className="flex items-center gap-2.5 h-14 px-7 rounded-full text-[15px] font-semibold
-                  bg-gradient-to-b from-accent to-blue-600 text-white
-                  shadow-[0_10px_30px_rgba(10,132,255,0.55)]
-                  hover:brightness-110 active:scale-[0.98] transition-all"
-              >
-                <Share2 className="w-4 h-4" />
-                Compartilhar rota
-              </button>
             )}
+            {/* Compartilhar — sempre disponível quando há rota */}
+            <button
+              onClick={() => setShareOpen(true)}
+              className={`flex items-center gap-2.5 h-14 rounded-full text-[14px] font-semibold transition-all
+                active:scale-[0.98]
+                ${
+                  liveTracking
+                    ? 'px-5 glass text-ink-100 hover:bg-white/[0.12]'
+                    : 'px-7 bg-gradient-to-b from-accent to-blue-600 text-white text-[15px] shadow-[0_10px_30px_rgba(10,132,255,0.55)] hover:brightness-110'
+                }`}
+            >
+              <Share2 className="w-4 h-4" />
+              {liveTracking ? 'Compartilhar' : 'Compartilhar rota'}
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
