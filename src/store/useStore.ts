@@ -31,6 +31,7 @@ interface State {
   pickingOrigin: boolean;
   pickingDestination: boolean;
   addingHotel: boolean;
+  drawerOpen: boolean;
   hotelsLoading: boolean;
   hotelsError?: string;
   hotelsFetchedAt?: number;
@@ -79,6 +80,7 @@ interface State {
   setPickingOrigin: (b: boolean) => void;
   setPickingDestination: (b: boolean) => void;
   setAddingHotel: (b: boolean) => void;
+  setDrawerOpen: (b: boolean) => void;
   addManualHotel: (h: { name: string; lat: number; lng: number; guests: number }) => void;
   setHotelsLoading: (b: boolean) => void;
   setHotelsError: (e: string | undefined) => void;
@@ -131,6 +133,7 @@ export const useStore = create<State>()(
       pickingOrigin: false,
       pickingDestination: false,
       addingHotel: false,
+      drawerOpen: false,
       hotelsLoading: false,
       hotelsError: undefined,
       hotelsFetchedAt: undefined,
@@ -208,6 +211,7 @@ export const useStore = create<State>()(
       setPickingOrigin: (b) => set({ pickingOrigin: b }),
       setPickingDestination: (b) => set({ pickingDestination: b }),
       setAddingHotel: (b) => set({ addingHotel: b }),
+      setDrawerOpen: (b) => set({ drawerOpen: b }),
       addManualHotel: ({ name, lat, lng, guests }) =>
         set({
           hotels: [

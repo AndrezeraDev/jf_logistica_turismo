@@ -46,6 +46,8 @@ export function RoutePanel() {
 
     setRouteLoading(true);
     setRouteError(undefined);
+    // Fecha o drawer (mobile) pra mostrar o mapa enquanto calcula
+    useStore.getState().setDrawerOpen(false);
     try {
       const origin: LatLng = { lat: settings.origin.lat, lng: settings.origin.lng };
       const dest: LatLng | null = settings.destination

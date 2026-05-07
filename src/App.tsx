@@ -25,7 +25,8 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('map');
   const [activeHotel, setActiveHotel] = useState<Hotel | null>(null);
   const [newHotelAt, setNewHotelAt] = useState<{ lat: number; lng: number } | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const drawerOpen = useStore((s) => s.drawerOpen);
+  const setDrawerOpen = useStore((s) => s.setDrawerOpen);
 
   const hotels = useStore((s) => s.hotels);
   const updateHotelGuests = useStore((s) => s.updateHotelGuests);
@@ -81,10 +82,12 @@ export default function App() {
 
   const panelContent = (
     <>
-      <div className="px-4 pt-4 pb-3 flex items-start justify-between">
-        <div>
-          <div className="text-[11px] text-ink-400 uppercase tracking-[0.15em]">JE Hoffman</div>
-          <div className="text-[22px] font-semibold tracking-tight">
+      <div className="px-3 md:px-4 pt-3 md:pt-4 pb-2 md:pb-3 flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="text-[10px] md:text-[11px] text-ink-400 uppercase tracking-[0.15em]">
+            JE Hoffmann
+          </div>
+          <div className="text-[19px] md:text-[22px] font-semibold tracking-tight truncate">
             {tab === 'map' && 'Logística turística'}
             {tab === 'fleet' && 'Frota da empresa'}
             {tab === 'settings' && 'Configurações'}
@@ -94,13 +97,13 @@ export default function App() {
         <button
           onClick={() => setDrawerOpen(false)}
           aria-label="Fechar menu"
-          className="md:hidden w-9 h-9 rounded-full flex items-center justify-center text-ink-300 hover:bg-white/10"
+          className="md:hidden w-9 h-9 rounded-full flex items-center justify-center text-ink-300 hover:bg-white/10 flex-shrink-0"
         >
           <X className="w-4 h-4" />
         </button>
       </div>
 
-      <div className="flex-1 overflow-auto px-4 pb-4 space-y-3">
+      <div className="flex-1 overflow-auto overscroll-contain px-3 md:px-4 pb-4 space-y-3">
         <AnimatePresence mode="wait">
           {tab === 'map' && (
             <motion.div
@@ -228,7 +231,10 @@ export default function App() {
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', stiffness: 380, damping: 38 }}
               className="fixed top-0 left-0 bottom-0 z-[1101] flex md:hidden bg-ink-900 border-r border-white/5 shadow-2xl"
-              style={{ width: 'min(86vw, 420px)' }}
+              style={{
+                width: 'min(94vw, 460px)',
+                paddingLeft: 'env(safe-area-inset-left, 0)',
+              }}
             >
               <Sidebar
                 tab={tab}
@@ -236,7 +242,7 @@ export default function App() {
                   setTab(t);
                 }}
               />
-              <div className="flex-1 flex flex-col">{panelContent}</div>
+              <div className="flex-1 flex flex-col min-w-0">{panelContent}</div>
             </motion.aside>
           </>
         )}

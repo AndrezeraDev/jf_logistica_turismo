@@ -31,11 +31,11 @@ export function Sidebar({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void })
   }
 
   return (
-    <aside className="w-[72px] flex-shrink-0 border-r border-white/5 bg-black/30 backdrop-blur-xl flex flex-col items-center py-4 gap-1">
+    <aside className="w-[64px] md:w-[72px] flex-shrink-0 border-r border-white/5 bg-black/30 backdrop-blur-xl flex flex-col items-center py-3 md:py-4 gap-0.5 md:gap-1">
       <img
         src="/logo.png"
         alt="JE Hoffmann Turismo"
-        className="w-10 h-10 rounded-2xl object-cover shadow-[0_6px_18px_rgba(10,132,255,0.45)] mb-2"
+        className="w-9 h-9 md:w-10 md:h-10 rounded-2xl object-cover shadow-[0_6px_18px_rgba(10,132,255,0.45)] mb-1.5 md:mb-2"
       />
       {items.map((it) => {
         const active = tab === it.key;
@@ -43,7 +43,7 @@ export function Sidebar({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void })
           <button
             key={it.key}
             onClick={() => setTab(it.key)}
-            className="relative w-12 h-12 rounded-2xl flex flex-col items-center justify-center gap-0.5 group transition-colors"
+            className="relative w-11 h-11 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex flex-col items-center justify-center gap-0.5 group transition-colors"
           >
             {active && (
               <motion.div
