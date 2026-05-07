@@ -12,19 +12,17 @@ export function HotelSearch({ onPick }: { onPick: (h: Hotel) => void }) {
   const [hint, setHint] = useState(false); // controla animação "lupa → texto → lupa"
   const inputRef = useRef<HTMLInputElement>(null);
   const drawerOpen = useStore((s) => s.drawerOpen);
-  const STORAGE_KEY = 'hotelSearchHintedV2';
+  const hasAnimatedRef = useRef(false);
 
-  // Anima o botão (descoberta) só uma vez por sessão E SOMENTE quando o
-  // drawer mobile está fechado (caso contrário rodaria atrás da gaveta e
-  // o usuário não veria nada).
+  // Anima o botão na 1ª vez que o drawer fecha após este componente montar
+  // (= cada vez que hotéis são carregados novos no app).
+  // Sem gate persistente: usa ref local — repete em novos mounts.
   useEffect(() => {
     if (drawerOpen) return;
-    if (typeof sessionStorage === 'undefined') return;
-    if (sessionStorage.getItem(STORAGE_KEY)) return;
-    // marca como visto SÓ quando vai realmente animar
-    sessionStorage.setItem(STORAGE_KEY, '1');
-    const t1 = setTimeout(() => setHint(true), 800);
-    const t2 = setTimeout(() => setHint(false), 800 + 3200);
+    if (hasAnimatedRef.current) return;
+    hasAnimatedRef.current = true;
+    const t1 = setTimeout(() => setHint(true), 700);
+    const t2 = setTimeout(() => setHint(false), 700 + 3500);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
