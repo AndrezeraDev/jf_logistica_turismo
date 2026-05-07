@@ -9,7 +9,24 @@ export function HotelSearch({ onPick }: { onPick: (h: Hotel) => void }) {
   const navigationMode = useStore((s) => s.navigationMode);
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
+  const [hint, setHint] = useState(false); // controla animação "lupa → texto → lupa"
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Anima o botão (descoberta) só uma vez por sessão.
+  useEffect(() => {
+    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('hotelSearchHinted')) {
+      return;
+    }
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem('hotelSearchHinted', '1');
+    }
+    const t1 = setTimeout(() => setHint(true), 1200);
+    const t2 = setTimeout(() => setHint(false), 1200 + 3200);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, []);
 
   useEffect(() => {
     if (open) {
@@ -60,14 +77,47 @@ export function HotelSearch({ onPick }: { onPick: (h: Hotel) => void }) {
 
   return (
     <>
-      {/* Botão lupa */}
-      <button
+      {/* Botão lupa — expande temporariamente mostrando "Procurar hotéis"
+          como dica de descoberta na primeira vez que aparece. */}
+      <motion.button
         onClick={() => setOpen(true)}
-        aria-label="Buscar hotel"
-        className="absolute top-[148px] left-4 z-[1000] glass rounded-full w-11 h-11 flex items-center justify-center shadow-glass text-ink-100 hover:bg-white/[0.12] transition-colors md:top-4 md:left-auto md:right-[210px]"
+        aria-label="Procurar hotel"
+        className="absolute top-[148px] left-4 z-[1000] glass rounded-full h-11 flex items-center shadow-glass text-ink-100 hover:bg-white/[0.12] overflow-hidden md:top-4 md:left-auto md:right-[210px]"
+        animate={{
+          boxShadow: hint
+            ? '0 8px 24px rgba(10,132,255,0.45), 0 1px 0 rgba(255,255,255,0.06) inset'
+            : '0 1px 0 rgba(255,255,255,0.04) inset, 0 10px 30px rgba(0,0,0,0.35)',
+        }}
+        transition={{ duration: 0.4 }}
       >
-        <Search className="w-5 h-5 md:w-4 md:h-4" />
-      </button>
+        <div className="w-11 h-11 flex items-center justify-center flex-shrink-0">
+          <motion.div
+            animate={
+              hint
+                ? { rotate: [0, -12, 12, 0], scale: [1, 1.15, 1.15, 1] }
+                : { rotate: 0, scale: 1 }
+            }
+            transition={{ duration: 0.6, times: [0, 0.3, 0.6, 1] }}
+          >
+            <Search className="w-5 h-5 md:w-4 md:h-4" />
+          </motion.div>
+        </div>
+        <AnimatePresence initial={false}>
+          {hint && (
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 132, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+              className="overflow-hidden"
+            >
+              <span className="block whitespace-nowrap text-[13px] font-medium pr-3">
+                Procurar hotéis
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.button>
 
       <AnimatePresence>
         {open && (
