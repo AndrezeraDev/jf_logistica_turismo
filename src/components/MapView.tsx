@@ -642,7 +642,7 @@ export function MapView({
         <button
           onClick={fetchAreaHotels}
           disabled={hotelsLoading}
-          className="absolute top-4 right-4 z-[1000] glass rounded-full px-4 py-2 text-[12px] flex items-center gap-2 shadow-glass hover:bg-white/[0.12] transition-colors disabled:opacity-60"
+          className="absolute top-4 right-4 z-[1000] glass rounded-full h-9 px-4 text-[12px] flex items-center gap-2 shadow-glass hover:bg-white/[0.12] transition-colors disabled:opacity-60"
         >
           {hotelsLoading ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />

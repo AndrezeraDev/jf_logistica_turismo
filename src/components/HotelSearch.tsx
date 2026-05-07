@@ -77,19 +77,20 @@ export function HotelSearch({ onPick }: { onPick: (h: Hotel) => void }) {
 
   return (
     <>
-      {/* Botão lupa — abre mostrando "Procurar hotéis", segura 5s e colapsa só pra ícone. */}
+      {/* Botão lupa — abre mostrando "Procurar hotéis", segura 5s e colapsa só pra ícone.
+          Dimensões alinhadas com "Buscar hotéis em X km" (h-9, text-[12px]). */}
       <button
         onClick={() => setOpen(true)}
         aria-label="Procurar hotel"
-        className={`absolute top-[148px] left-4 z-[1000] glass rounded-full h-11 flex items-center shadow-glass text-ink-100 hover:bg-white/[0.12] overflow-hidden md:top-4 md:left-auto md:right-[210px] transition-shadow duration-300
+        className={`absolute top-[148px] left-4 z-[1000] glass rounded-full h-9 flex items-center shadow-glass text-ink-100 hover:bg-white/[0.12] overflow-hidden md:top-4 md:left-auto md:right-[224px] transition-shadow duration-300
           ${hint ? 'shadow-[0_0_0_4px_rgba(10,132,255,0.20),0_12px_36px_rgba(10,132,255,0.55)]' : ''}`}
       >
-        <div className="w-11 h-11 flex items-center justify-center flex-shrink-0">
+        <div className="w-9 h-9 flex items-center justify-center flex-shrink-0">
           <motion.div
             animate={hint ? { rotate: [0, -10, 10, 0], scale: [1, 1.12, 1.12, 1] } : {}}
             transition={{ duration: 0.6, times: [0, 0.3, 0.6, 1] }}
           >
-            <Search className="w-4 h-4" />
+            <Search className="w-3.5 h-3.5" />
           </motion.div>
         </div>
         <AnimatePresence initial={false}>
@@ -97,7 +98,7 @@ export function HotelSearch({ onPick }: { onPick: (h: Hotel) => void }) {
             <motion.div
               key="hint-label"
               initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 132, opacity: 1 }}
+              animate={{ width: 116, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{
                 width: { duration: 0.32, ease: [0.4, 0, 0.2, 1] },
@@ -105,7 +106,7 @@ export function HotelSearch({ onPick }: { onPick: (h: Hotel) => void }) {
               }}
               style={{ overflow: 'hidden' }}
             >
-              <span className="block whitespace-nowrap text-[13px] font-medium pr-3 pl-1">
+              <span className="block whitespace-nowrap text-[12px] font-medium pr-3">
                 Procurar hotéis
               </span>
             </motion.div>
