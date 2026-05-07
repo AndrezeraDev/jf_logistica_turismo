@@ -74,6 +74,7 @@ export function MapView({
   const originMarkerRef = useRef<L.Marker | null>(null);
   const accuracyCircleRef = useRef<L.Circle | null>(null);
   const radiusCircleRef = useRef<L.Circle | null>(null);
+  const trafficLayerRef = useRef<L.TileLayer | null>(null);
   // Última coordenada que processamos — evita panTo após flyTo (mesma coord, dep diferente)
   const lastHandledOriginRef = useRef<{ lat: number; lng: number } | null>(null);
   const onHotelClickRef = useRef(onHotelClick);
@@ -97,6 +98,8 @@ export function MapView({
   const hotelsLoading = useStore((s) => s.hotelsLoading);
   const radiusKm = useStore((s) => s.settings.searchRadiusKm ?? 5);
   const showRadiusCircle = useStore((s) => s.settings.showRadiusCircle ?? true);
+  const tomtomApiKey = useStore((s) => s.settings.tomtomApiKey);
+  const showTrafficOverlay = useStore((s) => s.settings.showTrafficOverlay ?? false);
   const liveTracking = useStore((s) => s.liveTracking);
   const liveAccuracyM = useStore((s) => s.liveAccuracyM);
   const followMe = useStore((s) => s.followMe);
@@ -356,6 +359,37 @@ export function MapView({
     clearLocationZoomRequest,
     navigationMode,
   ]);
+
+  // Traffic overlay (TomTom) — toggle nas Configurações
+  useEffect(() => {
+    const map = mapInst.current;
+    if (!map) return;
+    // remove se existir
+    if (trafficLayerRef.current) {
+      map.removeLayer(trafficLayerRef.current);
+      trafficLayerRef.current = null;
+    }
+    if (!showTrafficOverlay || !tomtomApiKey?.trim()) return;
+    // `relative-delay` mostra apenas vias com atraso significativo (transparente nas demais)
+    const url =
+      `https://api.tomtom.com/traffic/map/4/tile/flow/relative-delay/{z}/{x}/{y}.png?key=${encodeURIComponent(tomtomApiKey.trim())}`;
+    const layer = L.tileLayer(url, {
+      attribution: '© TomTom',
+      opacity: 0.85,
+      maxZoom: 22,
+      minZoom: 8,
+      // pane higher than tilePane mas abaixo dos markers/route
+      pane: 'overlayPane',
+    });
+    layer.addTo(map);
+    trafficLayerRef.current = layer;
+    return () => {
+      if (trafficLayerRef.current) {
+        map.removeLayer(trafficLayerRef.current);
+        trafficLayerRef.current = null;
+      }
+    };
+  }, [showTrafficOverlay, tomtomApiKey]);
 
   // Radius circle — segue o centro do mapa
   useEffect(() => {

@@ -7,6 +7,7 @@ const OSRM_ENDPOINTS = [
 const OSRM_TIMEOUT_MS = 20_000;
 const ORS_URL = 'https://api.openrouteservice.org/v2/directions/driving-car/geojson';
 const ORS_TIMEOUT_MS = 20_000;
+const TOMTOM_TIMEOUT_MS = 15_000;
 
 export interface OsrmResult {
   polyline: LatLng[];
@@ -14,27 +15,38 @@ export interface OsrmResult {
   durationMin: number;
   usedFallback: boolean;
   engine?: string;
+  trafficDelayMin?: number;
 }
 
 /**
- * Tenta (1) OpenRouteService se houver API key, depois (2) OSRM públicos.
- * Fallback final: linha reta com `usedFallback=true`.
+ * Cadeia de roteamento (em ordem de preferência):
+ *  1) TomTom (com trânsito real) — se key configurada
+ *  2) OpenRouteService — se key configurada (sem trânsito, mais waypoints)
+ *  3) OSRM público — fallback grátis (sem trânsito, ~8 waypoints)
+ *  4) Linha reta — último recurso
  */
 export async function routeVia(
   points: LatLng[],
   orsApiKey?: string,
+  tomtomApiKey?: string,
 ): Promise<OsrmResult> {
   if (points.length < 2) {
     return { polyline: points.slice(), distanceKm: 0, durationMin: 0, usedFallback: false };
   }
 
-  // 1) OpenRouteService (quando houver key) — preferencial: mais estável, aceita até 70 waypoints
+  // 1) TomTom — rota com trânsito em tempo real
+  if (tomtomApiKey?.trim()) {
+    const r = await tryTomtom(tomtomApiKey.trim(), points);
+    if (r) return r;
+  }
+
+  // 2) OpenRouteService
   if (orsApiKey?.trim()) {
     const r = await tryORS(orsApiKey.trim(), points);
     if (r) return r;
   }
 
-  // 2) OSRM públicos
+  // 3) OSRM públicos
   const coords = points.map((p) => `${p.lng},${p.lat}`).join(';');
   for (const base of OSRM_ENDPOINTS) {
     const host = new URL(base).hostname;
@@ -71,7 +83,7 @@ export async function routeVia(
     }
   }
 
-  // 3) Todos os servidores falharam → fallback de linha reta
+  // 4) Todos os servidores falharam → fallback de linha reta
   console.warn('[routing] todos os endpoints falharam, usando linha reta');
   let dist = 0;
   for (let i = 1; i < points.length; i++) {
@@ -83,6 +95,65 @@ export async function routeVia(
     durationMin: (dist / 45) * 60,
     usedFallback: true,
   };
+}
+
+async function tryTomtom(apiKey: string, points: LatLng[]): Promise<OsrmResult | null> {
+  // TomTom expects: lat,lng:lat,lng:lat,lng (até 150 waypoints)
+  const coords = points.map((p) => `${p.lat},${p.lng}`).join(':');
+  const params = new URLSearchParams({
+    key: apiKey,
+    traffic: 'true',
+    travelMode: 'car',
+    routeType: 'fastest',
+    computeTravelTimeFor: 'all', // garante trafficDelayInSeconds na resposta
+  });
+  const url = `https://api.tomtom.com/routing/1/calculateRoute/${coords}/json?${params.toString()}`;
+
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), TOMTOM_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal });
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      console.warn(`[TomTom] HTTP ${res.status}: ${txt.slice(0, 200)}`);
+      return null;
+    }
+    const data = await res.json();
+    const route = data.routes?.[0];
+    if (!route) {
+      console.warn('[TomTom]: resposta sem rota');
+      return null;
+    }
+    const polyline: LatLng[] = [];
+    for (const leg of route.legs || []) {
+      for (const p of leg.points || []) {
+        if (typeof p.latitude === 'number' && typeof p.longitude === 'number') {
+          polyline.push({ lat: p.latitude, lng: p.longitude });
+        }
+      }
+    }
+    if (polyline.length < 2) {
+      console.warn('[TomTom]: geometria incompleta');
+      return null;
+    }
+    const summary = route.summary || {};
+    return {
+      polyline,
+      distanceKm: (summary.lengthInMeters || 0) / 1000,
+      durationMin: (summary.travelTimeInSeconds || 0) / 60,
+      usedFallback: false,
+      engine: 'tomtom.com',
+      trafficDelayMin: (summary.trafficDelayInSeconds || 0) / 60,
+    };
+  } catch (e) {
+    const isAbort = e instanceof DOMException && e.name === 'AbortError';
+    console.warn(
+      `[TomTom]: ${isAbort ? `timeout (${TOMTOM_TIMEOUT_MS / 1000}s)` : (e as Error).message}`,
+    );
+    return null;
+  } finally {
+    clearTimeout(t);
+  }
 }
 
 async function tryORS(apiKey: string, points: LatLng[]): Promise<OsrmResult | null> {

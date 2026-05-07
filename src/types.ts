@@ -49,6 +49,7 @@ export interface Route {
   aiSuggestion?: string;
   usedFallback?: boolean; // true = OSRM falhou, traçado é em linha reta
   routingEngine?: string; // host do OSRM que respondeu
+  trafficDelayMin?: number; // atraso somado por trânsito (TomTom — pickup+return)
 }
 
 export interface Settings {
@@ -56,6 +57,8 @@ export interface Settings {
   openaiModel?: string;
   orsApiKey?: string; // OpenRouteService
   foursquareApiKey?: string; // Foursquare Places (cobertura extra de hotéis)
+  tomtomApiKey?: string; // TomTom (rotas com trânsito real-time)
+  showTrafficOverlay?: boolean; // toggle pra mostrar overlay de trânsito no mapa
   origin?: LatLng & { label?: string };
   searchRadiusKm?: number;
   showRadiusCircle?: boolean;

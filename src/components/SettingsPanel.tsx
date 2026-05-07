@@ -16,6 +16,7 @@ import {
   Fuel,
   Sun,
   Moon,
+  Activity,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from './ui/Button';
@@ -37,6 +38,7 @@ export function SettingsPanel() {
   const [keyVisible, setKeyVisible] = useState(false);
   const [orsKeyVisible, setOrsKeyVisible] = useState(false);
   const [fsqKeyVisible, setFsqKeyVisible] = useState(false);
+  const [tomtomKeyVisible, setTomtomKeyVisible] = useState(false);
   const [locating, setLocating] = useState(false);
   const [geoError, setGeoError] = useState<string | undefined>();
   const [manualLat, setManualLat] = useState(settings.origin?.lat.toString() ?? '');
@@ -515,6 +517,85 @@ export function SettingsPanel() {
               </>
             )}
           </div>
+        </div>
+      </Card>
+
+      <Card
+        title="Trânsito em tempo real"
+        subtitle="TomTom — rotas inteligentes que evitam congestionamento"
+        action={<Activity className="w-4 h-4 text-ink-400" />}
+      >
+        <div className="space-y-2">
+          <div className="relative">
+            <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-400" />
+            <Input
+              type={tomtomKeyVisible ? 'text' : 'password'}
+              placeholder="TomTom API key"
+              value={settings.tomtomApiKey || ''}
+              onChange={(e) => setSettings({ tomtomApiKey: e.target.value })}
+              className="pl-9 pr-10 font-mono text-[12px]"
+            />
+            <button
+              onClick={() => setTomtomKeyVisible((v) => !v)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg flex items-center justify-center text-ink-400 hover:text-ink-100"
+            >
+              {tomtomKeyVisible ? (
+                <EyeOff className="w-3.5 h-3.5" />
+              ) : (
+                <Eye className="w-3.5 h-3.5" />
+              )}
+            </button>
+          </div>
+          <div className="text-[11px] text-ink-400 leading-relaxed">
+            {settings.tomtomApiKey?.trim() ? (
+              <span className="text-emerald-400">
+                ✓ TomTom ativo — rotas evitam ruas congestionadas automaticamente
+              </span>
+            ) : (
+              <>
+                Pegue uma grátis em{' '}
+                <a
+                  href="https://developer.tomtom.com/user/register"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-accent underline"
+                >
+                  developer.tomtom.com
+                </a>{' '}
+                — 2.500 chamadas/dia, sem cartão. Marque "Routing API" + "Traffic API".
+              </>
+            )}
+          </div>
+
+          {/* Toggle do overlay */}
+          {settings.tomtomApiKey?.trim() && (
+            <label className="flex items-start gap-2.5 cursor-pointer select-none pt-2 border-t border-white/5">
+              <div
+                className={`relative w-9 h-5 rounded-full flex-shrink-0 transition-colors mt-0.5 ${
+                  settings.showTrafficOverlay ? 'bg-accent' : 'bg-white/10'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={settings.showTrafficOverlay ?? false}
+                  onChange={(e) => setSettings({ showTrafficOverlay: e.target.checked })}
+                  className="sr-only"
+                />
+                <div
+                  className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-all ${
+                    settings.showTrafficOverlay ? 'left-[18px]' : 'left-0.5'
+                  }`}
+                />
+              </div>
+              <div className="flex-1">
+                <div className="text-[13px] text-ink-100">Overlay de trânsito no mapa</div>
+                <div className="text-[11px] text-ink-400 mt-0.5 leading-relaxed">
+                  Mostra ruas congestionadas em vermelho/amarelo. Consome cota — use só
+                  quando precisar.
+                </div>
+              </div>
+            </label>
+          )}
         </div>
       </Card>
 

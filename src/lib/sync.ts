@@ -40,6 +40,8 @@ export async function hydrateFromSupabase(userId: string) {
       openaiModel: s.openai_model || 'gpt-4o-mini',
       orsApiKey: s.ors_api_key || undefined,
       foursquareApiKey: s.foursquare_api_key || undefined,
+      tomtomApiKey: s.tomtom_api_key || undefined,
+      showTrafficOverlay: !!s.show_traffic_overlay,
       fuelPricePerLiter: s.fuel_price_per_liter ?? 6.0,
     };
     store.replaceSettings(newSettings);
@@ -64,6 +66,8 @@ export function schedulePushSettings(userId: string | undefined, settings: Setti
           openai_model: settings.openaiModel ?? 'gpt-4o-mini',
           ors_api_key: settings.orsApiKey ?? null,
           foursquare_api_key: settings.foursquareApiKey ?? null,
+          tomtom_api_key: settings.tomtomApiKey ?? null,
+          show_traffic_overlay: settings.showTrafficOverlay ?? false,
           fuel_price_per_liter: settings.fuelPricePerLiter ?? 6.0,
           updated_at: new Date().toISOString(),
         },

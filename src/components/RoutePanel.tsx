@@ -70,8 +70,8 @@ export function RoutePanel() {
       ];
 
       const [pickup, back] = await Promise.all([
-        routeVia(pickupPoints, settings.orsApiKey),
-        routeVia(returnPoints, settings.orsApiKey),
+        routeVia(pickupPoints, settings.orsApiKey, settings.tomtomApiKey),
+        routeVia(returnPoints, settings.orsApiKey, settings.tomtomApiKey),
       ]);
 
       const r: Route = {
@@ -86,6 +86,7 @@ export function RoutePanel() {
         suggestedVehicleId: suggestedVehicle?.id,
         usedFallback: pickup.usedFallback || back.usedFallback,
         routingEngine: pickup.engine || back.engine,
+        trafficDelayMin: (pickup.trafficDelayMin || 0) + (back.trafficDelayMin || 0),
       };
       setRoute(r);
       setAiError(undefined);
@@ -197,6 +198,19 @@ export function RoutePanel() {
                 <Stat icon={<Timer className="w-3.5 h-3.5" />} label="Duração" value={`${Math.round(route.totalDurationMin)} min`} />
                 <Stat icon={<Users className="w-3.5 h-3.5" />} label="Pax" value={`${route.totalGuests}`} />
               </div>
+
+              {!!route.trafficDelayMin && route.trafficDelayMin > 0.5 && (
+                <div className="mb-3 px-3 py-2 rounded-lg bg-amber-300/10 border border-amber-300/25 text-[12px] text-amber-200 flex items-center gap-2">
+                  <span className="text-amber-400">🚦</span>
+                  <span className="flex-1">
+                    Trânsito atual adiciona{' '}
+                    <b>+{Math.round(route.trafficDelayMin)} min</b> à rota
+                  </span>
+                  {route.routingEngine === 'tomtom.com' && (
+                    <span className="text-[10px] text-amber-400/80">via TomTom</span>
+                  )}
+                </div>
+              )}
 
               <EconomyCard route={route} />
 
