@@ -41,3 +41,7 @@ pnpm-debug.log*
 
 # Claude Code (metadata local)
 .claude
+
+# Remotion output e cache
+out
+.remotion
