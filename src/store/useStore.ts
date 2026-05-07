@@ -41,6 +41,7 @@ interface State {
   currentStopIndex: number;
   welcomeSeen: boolean;
   requestZoomOnNextLocation: boolean;
+  theme: 'dark' | 'light';
   flyToTarget?: { lat: number; lng: number; zoom?: number; ts: number };
   // diagnóstico de busca: quantos vieram de cada fonte
   lastSearchSources?: {
@@ -92,6 +93,8 @@ interface State {
   clearLocationZoomRequest: () => void;
   flyTo: (lat: number, lng: number, zoom?: number) => void;
   setLastSearchSources: (s: State['lastSearchSources']) => void;
+  setTheme: (t: 'dark' | 'light') => void;
+  toggleTheme: () => void;
   reset: () => void;
 }
 
@@ -137,6 +140,7 @@ export const useStore = create<State>()(
       welcomeSeen: false,
       requestZoomOnNextLocation: false,
       flyToTarget: undefined,
+      theme: 'dark',
 
       setSession: (s) => set({ session: s }),
       setProfile: (p) => set({ profile: p }),
@@ -242,6 +246,19 @@ export const useStore = create<State>()(
       flyTo: (lat, lng, zoom) =>
         set({ flyToTarget: { lat, lng, zoom, ts: Date.now() } }),
       setLastSearchSources: (s) => set({ lastSearchSources: s }),
+      setTheme: (t) => {
+        set({ theme: t });
+        if (typeof document !== 'undefined') {
+          document.documentElement.setAttribute('data-theme', t);
+        }
+      },
+      toggleTheme: () => {
+        const next = get().theme === 'dark' ? 'light' : 'dark';
+        set({ theme: next });
+        if (typeof document !== 'undefined') {
+          document.documentElement.setAttribute('data-theme', next);
+        }
+      },
       reset: () => set({ hotels: [], route: undefined, selectedCity: undefined }),
     }),
     {
@@ -250,7 +267,14 @@ export const useStore = create<State>()(
       partialize: (s) => ({
         welcomeSeen: s.welcomeSeen,
         liveTracking: s.liveTracking,
+        theme: s.theme,
       }),
+      onRehydrateStorage: () => (state) => {
+        // aplica o tema no <html> assim que o storage é hidratado
+        if (state?.theme && typeof document !== 'undefined') {
+          document.documentElement.setAttribute('data-theme', state.theme);
+        }
+      },
     },
   ),
 );

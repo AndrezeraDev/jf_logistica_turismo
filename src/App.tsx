@@ -187,7 +187,7 @@ export default function App() {
   // Auth gates
   if (!authReady) {
     return (
-      <div className="h-full w-full flex items-center justify-center bg-[#0b0b0d] text-ink-400 text-[13px]">
+      <div className="h-full w-full flex items-center justify-center bg-ink-900 text-ink-400 text-[13px]">
         Carregando…
       </div>
     );
@@ -197,7 +197,7 @@ export default function App() {
   }
 
   return (
-    <div className="h-full w-full flex bg-[#0b0b0d] text-ink-100 overflow-hidden">
+    <div className="h-full w-full flex bg-ink-900 text-ink-100 overflow-hidden">
       {/* Desktop: sidebar + painel sempre visíveis */}
       <div className="hidden md:flex">
         <Sidebar tab={tab} setTab={setTab} />
@@ -225,7 +225,7 @@ export default function App() {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', stiffness: 380, damping: 38 }}
-              className="fixed top-0 left-0 bottom-0 z-[1101] flex md:hidden bg-[#0b0b0d] border-r border-white/5 shadow-2xl"
+              className="fixed top-0 left-0 bottom-0 z-[1101] flex md:hidden bg-ink-900 border-r border-white/5 shadow-2xl"
               style={{ width: 'min(86vw, 420px)' }}
             >
               <Sidebar

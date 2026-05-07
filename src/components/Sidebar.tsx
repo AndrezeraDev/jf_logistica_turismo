@@ -1,4 +1,4 @@
-import { Map, Bus, Settings, Users, LogOut } from 'lucide-react';
+import { Map, Bus, Settings, Users, LogOut, Sun, Moon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useStore } from '../store/useStore';
 import { supabase } from '../lib/supabase';
@@ -7,6 +7,8 @@ export type Tab = 'map' | 'fleet' | 'settings' | 'users';
 
 export function Sidebar({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
   const profile = useStore((s) => s.profile);
+  const theme = useStore((s) => s.theme);
+  const toggleTheme = useStore((s) => s.toggleTheme);
   const isAdmin = profile?.role === 'admin';
 
   const items: Array<{ key: Tab; label: string; icon: React.ReactNode }> = [
@@ -63,7 +65,18 @@ export function Sidebar({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void })
       })}
 
       {profile && (
-        <div className="mt-auto flex flex-col items-center gap-2 pb-1">
+        <div className="mt-auto flex flex-col items-center gap-1 pb-1">
+          <button
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Tema claro' : 'Tema escuro'}
+            className="w-10 h-10 rounded-2xl flex items-center justify-center text-ink-400 hover:text-ink-100 hover:bg-white/[0.06] transition-colors"
+          >
+            {theme === 'dark' ? (
+              <Sun className="w-[18px] h-[18px]" />
+            ) : (
+              <Moon className="w-[18px] h-[18px]" />
+            )}
+          </button>
           <div
             title={profile.username}
             className="w-8 h-8 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center text-[11px] font-semibold uppercase text-ink-200"

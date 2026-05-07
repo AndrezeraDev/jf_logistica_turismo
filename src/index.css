@@ -5,8 +5,74 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =========================================================
+   Tema — variáveis CSS. Default = dark.
+   data-theme="light" no <html> aplica overrides.
+   ========================================================= */
 :root {
   color-scheme: dark;
+
+  --bg: #0b0b0d;
+  --bg-elevated: #18181b;
+  --text-1: #ededef;
+  --text-2: #d9d9de;
+  --text-3: #b7b7bf;
+  --text-4: #8a8a93;
+  --text-5: #5e5e66;
+
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.18);
+
+  --overlay-1: rgba(255, 255, 255, 0.04);
+  --overlay-2: rgba(255, 255, 255, 0.06);
+  --overlay-3: rgba(255, 255, 255, 0.08);
+  --overlay-4: rgba(255, 255, 255, 0.14);
+
+  --glass-bg: linear-gradient(180deg, rgba(28, 28, 32, 0.72) 0%, rgba(22, 22, 26, 0.62) 100%);
+  --shadow-glass: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 10px 30px rgba(0, 0, 0, 0.35);
+
+  --tile-filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.92) saturate(0.85);
+  --leaflet-control-bg: rgba(20, 20, 24, 0.8);
+  --leaflet-popup-bg: rgba(18, 18, 22, 0.92);
+
+  --scrollbar-thumb: rgba(255, 255, 255, 0.12);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.22);
+
+  --step-pin-bg: #ededef;
+  --step-pin-fg: #0b0b0d;
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+
+  --bg: #f5f5f7;
+  --bg-elevated: #ffffff;
+  --text-1: #1d1d1f;
+  --text-2: #2c2c2e;
+  --text-3: #424245;
+  --text-4: #6e6e73;
+  --text-5: #86868b;
+
+  --border: rgba(0, 0, 0, 0.10);
+  --border-strong: rgba(0, 0, 0, 0.20);
+
+  --overlay-1: rgba(0, 0, 0, 0.03);
+  --overlay-2: rgba(0, 0, 0, 0.05);
+  --overlay-3: rgba(0, 0, 0, 0.07);
+  --overlay-4: rgba(0, 0, 0, 0.12);
+
+  --glass-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.86) 0%, rgba(245, 245, 247, 0.74) 100%);
+  --shadow-glass: 0 1px 0 rgba(255, 255, 255, 0.5) inset, 0 12px 36px rgba(0, 0, 0, 0.10);
+
+  --tile-filter: none;
+  --leaflet-control-bg: rgba(255, 255, 255, 0.92);
+  --leaflet-popup-bg: rgba(255, 255, 255, 0.96);
+
+  --scrollbar-thumb: rgba(0, 0, 0, 0.18);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.32);
+
+  --step-pin-bg: #1d1d1f;
+  --step-pin-fg: #ffffff;
 }
 
 html,
@@ -17,101 +83,227 @@ body,
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', Inter, system-ui, sans-serif;
-  background: #0b0b0d;
-  color: #ededef;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', Inter, system-ui,
+    sans-serif;
+  background: var(--bg);
+  color: var(--text-1);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: -0.01em;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-/* Scrollbar like macOS */
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 10px; border: 2px solid transparent; background-clip: padding-box; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); background-clip: padding-box; border: 2px solid transparent; }
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
 
 /* Glass panel */
 .glass {
-  background: linear-gradient(180deg, rgba(28,28,32,0.72) 0%, rgba(22,22,26,0.62) 100%);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--glass-bg);
+  border: 1px solid var(--border);
   backdrop-filter: saturate(160%) blur(24px);
   -webkit-backdrop-filter: saturate(160%) blur(24px);
 }
 
-/* Leaflet overrides — darker UI */
+/* =========================================================
+   Light-mode: inverte os utilitários "white opacity" do Tailwind
+   pra "black opacity" — mantém o look de overlay sutil.
+   ========================================================= */
+[data-theme='light'] .bg-white\/\[0\.03\] {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+[data-theme='light'] .bg-white\/\[0\.04\] {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+[data-theme='light'] .bg-white\/\[0\.05\] {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+[data-theme='light'] .bg-white\/\[0\.06\] {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+[data-theme='light'] .bg-white\/\[0\.08\] {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+[data-theme='light'] .bg-white\/\[0\.10\] {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+[data-theme='light'] .bg-white\/\[0\.12\] {
+  background-color: rgba(0, 0, 0, 0.10);
+}
+[data-theme='light'] .bg-white\/\[0\.14\] {
+  background-color: rgba(0, 0, 0, 0.12);
+}
+[data-theme='light'] .bg-white\/5 {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+[data-theme='light'] .bg-white\/10 {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='light'] .border-white\/5 {
+  border-color: rgba(0, 0, 0, 0.05);
+}
+[data-theme='light'] .border-white\/8 {
+  border-color: rgba(0, 0, 0, 0.07);
+}
+[data-theme='light'] .border-white\/10 {
+  border-color: rgba(0, 0, 0, 0.10);
+}
+[data-theme='light'] .border-white\/15 {
+  border-color: rgba(0, 0, 0, 0.13);
+}
+[data-theme='light'] .border-white\/20 {
+  border-color: rgba(0, 0, 0, 0.18);
+}
+
+[data-theme='light'] .hover\:bg-white\/\[0\.06\]:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+[data-theme='light'] .hover\:bg-white\/\[0\.08\]:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+[data-theme='light'] .hover\:bg-white\/\[0\.10\]:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+[data-theme='light'] .hover\:bg-white\/\[0\.12\]:hover {
+  background-color: rgba(0, 0, 0, 0.10);
+}
+[data-theme='light'] .hover\:bg-white\/\[0\.14\]:hover {
+  background-color: rgba(0, 0, 0, 0.12);
+}
+[data-theme='light'] .hover\:bg-white\/5:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+[data-theme='light'] .hover\:bg-white\/10:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+/* Sidebar/drawer com bg-black/X — em light mode vira branco com leve sombra */
+[data-theme='light'] .bg-black\/30 {
+  background-color: rgba(255, 255, 255, 0.85);
+}
+[data-theme='light'] .bg-black\/40 {
+  background-color: rgba(255, 255, 255, 0.78);
+}
+[data-theme='light'] .bg-black\/45 {
+  background-color: rgba(255, 255, 255, 0.72);
+}
+[data-theme='light'] .bg-black\/50 {
+  background-color: rgba(0, 0, 0, 0.20); /* backdrop de modal continua escurinho */
+}
+[data-theme='light'] .bg-black\/55 {
+  background-color: rgba(0, 0, 0, 0.30);
+}
+
+/* =========================================================
+   Leaflet (overrides usando vars)
+   ========================================================= */
 .leaflet-container {
-  background: #0b0b0d;
+  background: var(--bg);
   font-family: inherit;
   outline: none;
 }
 
 .leaflet-control-zoom a,
 .leaflet-control-attribution {
-  background: rgba(20,20,24,0.8) !important;
-  color: #ededef !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
+  background: var(--leaflet-control-bg) !important;
+  color: var(--text-1) !important;
+  border: 1px solid var(--border) !important;
   backdrop-filter: blur(20px);
 }
 .leaflet-control-zoom a {
   border-radius: 10px !important;
   margin-bottom: 6px;
-  width: 32px; height: 32px;
+  width: 32px;
+  height: 32px;
   line-height: 32px;
 }
-.leaflet-control-attribution a { color: #8a8a93 !important; }
+.leaflet-control-attribution a {
+  color: var(--text-4) !important;
+}
 
 .leaflet-popup-content-wrapper {
-  background: rgba(18,18,22,0.92) !important;
-  color: #ededef !important;
+  background: var(--leaflet-popup-bg) !important;
+  color: var(--text-1) !important;
   border-radius: 14px !important;
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+  border: 1px solid var(--border);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(20px);
 }
-.leaflet-popup-content { margin: 14px 16px !important; }
-.leaflet-popup-tip { background: rgba(18,18,22,0.92) !important; }
+.leaflet-popup-content {
+  margin: 14px 16px !important;
+}
+.leaflet-popup-tip {
+  background: var(--leaflet-popup-bg) !important;
+}
 
-/* Hotel marker */
+/* Hotel marker (cor mantida nos dois temas) */
 .hotel-pin {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: linear-gradient(180deg, #0A84FF 0%, #0060DF 100%);
-  border: 2.5px solid rgba(255,255,255,0.9);
-  box-shadow: 0 6px 18px rgba(10,132,255,0.45), 0 1px 0 rgba(255,255,255,0.25) inset;
-  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, #0a84ff 0%, #0060df 100%);
+  border: 2.5px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 6px 18px rgba(10, 132, 255, 0.45), 0 1px 0 rgba(255, 255, 255, 0.25) inset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: white;
   font-weight: 600;
   font-size: 12px;
   position: relative;
 }
 .hotel-pin.has-guests {
-  background: linear-gradient(180deg, #34C759 0%, #1F9B44 100%);
-  box-shadow: 0 6px 18px rgba(52,199,89,0.45), 0 1px 0 rgba(255,255,255,0.25) inset;
+  background: linear-gradient(180deg, #34c759 0%, #1f9b44 100%);
+  box-shadow: 0 6px 18px rgba(52, 199, 89, 0.45), 0 1px 0 rgba(255, 255, 255, 0.25) inset;
 }
 .hotel-pin .ring {
   position: absolute;
   inset: -6px;
   border-radius: 50%;
-  border: 2px solid rgba(10,132,255,0.6);
+  border: 2px solid rgba(10, 132, 255, 0.6);
   animation: pulse-ring 1.8s ease-out infinite;
   pointer-events: none;
 }
-.hotel-pin.has-guests .ring { border-color: rgba(52,199,89,0.6); }
+.hotel-pin.has-guests .ring {
+  border-color: rgba(52, 199, 89, 0.6);
+}
 @keyframes pulse-ring {
-  0% { transform: scale(0.75); opacity: 0.8; }
-  100% { transform: scale(2.3); opacity: 0; }
+  0% {
+    transform: scale(0.75);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.3);
+    opacity: 0;
+  }
 }
 
 /* User location marker */
 .me-pin {
   position: relative;
-  width: 18px; height: 18px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   background: #ffffff;
-  border: 3px solid #0A84FF;
-  box-shadow: 0 0 0 6px rgba(10,132,255,0.25), 0 6px 18px rgba(0,0,0,0.45);
+  border: 3px solid #0a84ff;
+  box-shadow: 0 0 0 6px rgba(10, 132, 255, 0.25), 0 6px 18px rgba(0, 0, 0, 0.45);
   box-sizing: border-box;
 }
 .me-pin.live::after {
@@ -119,7 +311,7 @@ body {
   position: absolute;
   inset: -4px;
   border-radius: 50%;
-  border: 2px solid rgba(10,132,255,0.7);
+  border: 2px solid rgba(10, 132, 255, 0.7);
   animation: pulse-ring 1.8s ease-out infinite;
   pointer-events: none;
   box-sizing: border-box;
@@ -131,27 +323,41 @@ body {
   height: 26px;
   padding: 0 6px;
   border-radius: 14px;
-  background: #ededef;
-  color: #0b0b0d;
-  border: 2px solid #0A84FF;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
-  display: flex; align-items: center; justify-content: center;
+  background: var(--step-pin-bg);
+  color: var(--step-pin-fg);
+  border: 2px solid #0a84ff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-weight: 700;
   font-size: 12px;
 }
 
 /* Animated marker appearance */
-.pop-in { animation: pop-in 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.pop-in {
+  animation: pop-in 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
 @keyframes pop-in {
-  0% { transform: scale(0.3) translateY(-10px); opacity: 0; }
-  70% { transform: scale(1.15) translateY(0); opacity: 1; }
-  100% { transform: scale(1) translateY(0); opacity: 1; }
+  0% {
+    transform: scale(0.3) translateY(-10px);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.15) translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
 }
 
-/* Dark tile fallback — invert & hue shift the default OSM tiles */
+/* Tile filter — controlado pela var (light = none) */
 .tile-dark {
-  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.92) saturate(0.85);
+  filter: var(--tile-filter);
 }
 
-/* Buttons pressed state */
-button:active { transform: translateY(0.5px); }
+button:active {
+  transform: translateY(0.5px);
+}

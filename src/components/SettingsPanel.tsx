@@ -14,6 +14,8 @@ import {
   Radar,
   Building2,
   Fuel,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from './ui/Button';
@@ -26,6 +28,8 @@ export function SettingsPanel() {
   const settings = useStore((s) => s.settings);
   const setSettings = useStore((s) => s.setSettings);
   const setPickingOrigin = useStore((s) => s.setPickingOrigin);
+  const theme = useStore((s) => s.theme);
+  const setTheme = useStore((s) => s.setTheme);
   const liveTracking = useStore((s) => s.liveTracking);
   const setLiveTracking = useStore((s) => s.setLiveTracking);
   const liveAccuracyM = useStore((s) => s.liveAccuracyM);
@@ -165,6 +169,43 @@ export function SettingsPanel() {
 
   return (
     <div className="space-y-3">
+      <Card
+        title="Aparência"
+        subtitle={theme === 'dark' ? 'Tema escuro' : 'Tema claro'}
+        action={
+          theme === 'dark' ? (
+            <Moon className="w-4 h-4 text-ink-400" />
+          ) : (
+            <Sun className="w-4 h-4 text-ink-400" />
+          )
+        }
+      >
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => setTheme('dark')}
+            className={`h-12 rounded-xl flex items-center justify-center gap-2 text-[13px] font-medium border transition-all ${
+              theme === 'dark'
+                ? 'bg-accent/15 border-accent/40 text-accent'
+                : 'bg-white/[0.04] border-white/10 text-ink-300 hover:bg-white/[0.08]'
+            }`}
+          >
+            <Moon className="w-4 h-4" />
+            Escuro
+          </button>
+          <button
+            onClick={() => setTheme('light')}
+            className={`h-12 rounded-xl flex items-center justify-center gap-2 text-[13px] font-medium border transition-all ${
+              theme === 'light'
+                ? 'bg-accent/15 border-accent/40 text-accent'
+                : 'bg-white/[0.04] border-white/10 text-ink-300 hover:bg-white/[0.08]'
+            }`}
+          >
+            <Sun className="w-4 h-4" />
+            Claro
+          </button>
+        </div>
+      </Card>
+
       <Card title="Meu local" subtitle="Ponto de partida das rotas">
         <div className="space-y-2.5">
           {settings.origin && (

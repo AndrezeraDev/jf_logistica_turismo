@@ -65,7 +65,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="relative h-full w-full flex items-center justify-center overflow-hidden bg-[#0b0b0d]">
+    <div className="relative h-full w-full flex items-center justify-center overflow-hidden bg-ink-900">
       {/* aurora background — 3 manchas radiais animadas */}
       <div className="absolute inset-0 pointer-events-none">
         <motion.div

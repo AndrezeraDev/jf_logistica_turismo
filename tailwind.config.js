@@ -16,17 +16,19 @@ export default {
         ],
       },
       colors: {
+        // Paleta "ink" via CSS variables — muda automaticamente entre dark/light
+        // (definidas em src/index.css em :root e [data-theme="light"])
         ink: {
-          50: '#f7f7f8',
-          100: '#ededef',
-          200: '#d9d9de',
-          300: '#b7b7bf',
-          400: '#8a8a93',
-          500: '#5e5e66',
-          600: '#3f3f46',
+          50: 'var(--text-1)', // não usado muito; aproxima do texto principal
+          100: 'var(--text-1)',
+          200: 'var(--text-2)',
+          300: 'var(--text-3)',
+          400: 'var(--text-4)',
+          500: 'var(--text-5)',
+          600: '#3f3f46', // mantidos fixos pra borders/divs específicas raras
           700: '#2a2a2f',
-          800: '#18181b',
-          900: '#0b0b0d',
+          800: 'var(--bg-elevated)',
+          900: 'var(--bg)', // bg principal
         },
         accent: {
           DEFAULT: '#0A84FF',
