@@ -9,24 +9,20 @@ export function HotelSearch({ onPick }: { onPick: (h: Hotel) => void }) {
   const navigationMode = useStore((s) => s.navigationMode);
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
-  const [hint, setHint] = useState(false); // controla animação "lupa → texto → lupa"
+  const [hint, setHint] = useState(false); // controla animação "lupa → texto → lupa" no MOBILE
   const inputRef = useRef<HTMLInputElement>(null);
   const drawerOpen = useStore((s) => s.drawerOpen);
-  const hasAnimatedRef = useRef(false);
+  const hotelsFetchedAt = useStore((s) => s.hotelsFetchedAt);
 
-  // Anima o botão na 1ª vez que o drawer fecha após este componente montar:
-  // abre mostrando "Procurar hotéis", segura 5s aberto, depois colapsa só pra ícone.
+  // Toda vez que hotéis são (re)carregados ("Mapear hotéis em X km"),
+  // mostra "Procurar hotéis" por 5s no MOBILE (no desktop o texto é fixo via CSS).
   useEffect(() => {
     if (drawerOpen) return;
-    if (hasAnimatedRef.current) return;
-    hasAnimatedRef.current = true;
-    const t1 = setTimeout(() => setHint(true), 400); // pequena espera pra o usuário ver abrindo
-    const t2 = setTimeout(() => setHint(false), 400 + 5000); // 5 segundos aberto
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
-  }, [drawerOpen]);
+    if (!hotelsFetchedAt) return;
+    setHint(true);
+    const t = setTimeout(() => setHint(false), 5000);
+    return () => clearTimeout(t);
+  }, [drawerOpen, hotelsFetchedAt]);
 
   useEffect(() => {
     if (open) {
@@ -77,12 +73,13 @@ export function HotelSearch({ onPick }: { onPick: (h: Hotel) => void }) {
 
   return (
     <>
-      {/* Botão lupa — abre mostrando "Procurar hotéis", segura 5s e colapsa só pra ícone.
-          Dimensões alinhadas com "Buscar hotéis em X km" (h-9, text-[12px]). */}
+      {/* Botão lupa — desktop: texto FIXO. Mobile: ícone, expande com texto por 5s
+          a cada vez que hotéis são (re)carregados, depois colapsa.
+          Dimensões alinhadas com "Mapear hotéis em X km" (h-9, text-[12px]). */}
       <button
         onClick={() => setOpen(true)}
         aria-label="Procurar hotel"
-        className={`absolute top-[148px] left-4 z-[1000] glass rounded-full h-9 flex items-center shadow-glass text-ink-100 hover:bg-white/[0.12] overflow-hidden md:top-4 md:left-auto md:right-[224px] transition-shadow duration-300
+        className={`absolute top-[148px] left-4 z-[1000] glass rounded-full h-9 flex items-center shadow-glass text-ink-100 hover:bg-white/[0.12] overflow-hidden md:top-4 md:left-auto md:right-[244px] transition-shadow duration-300
           ${hint ? 'shadow-[0_0_0_4px_rgba(10,132,255,0.20),0_12px_36px_rgba(10,132,255,0.55)]' : ''}`}
       >
         <div className="w-9 h-9 flex items-center justify-center flex-shrink-0">
@@ -93,25 +90,34 @@ export function HotelSearch({ onPick }: { onPick: (h: Hotel) => void }) {
             <Search className="w-3.5 h-3.5" />
           </motion.div>
         </div>
-        <AnimatePresence initial={false}>
-          {hint && (
-            <motion.div
-              key="hint-label"
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 116, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{
-                width: { duration: 0.32, ease: [0.4, 0, 0.2, 1] },
-                opacity: { duration: 0.22 },
-              }}
-              style={{ overflow: 'hidden' }}
-            >
-              <span className="block whitespace-nowrap text-[12px] font-medium pr-3">
-                Procurar hotéis
-              </span>
-            </motion.div>
-          )}
-        </AnimatePresence>
+
+        {/* Desktop: texto fixo (sempre visível) */}
+        <span className="hidden md:block whitespace-nowrap text-[12px] font-medium pr-3">
+          Procurar hotéis
+        </span>
+
+        {/* Mobile: texto animado, aparece por 5s a cada Mapear */}
+        <div className="md:hidden">
+          <AnimatePresence initial={false}>
+            {hint && (
+              <motion.div
+                key="hint-label"
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: 116, opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                transition={{
+                  width: { duration: 0.32, ease: [0.4, 0, 0.2, 1] },
+                  opacity: { duration: 0.22 },
+                }}
+                style={{ overflow: 'hidden' }}
+              >
+                <span className="block whitespace-nowrap text-[12px] font-medium pr-3">
+                  Procurar hotéis
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </button>
 
       <AnimatePresence>

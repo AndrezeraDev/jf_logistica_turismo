@@ -160,7 +160,7 @@ export function CitySearch() {
             <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
             <span>
               Nenhum hotel cadastrado no OpenStreetMap para esta área. Tente uma cidade maior
-              ou use <b>"Buscar hotéis nesta área"</b> após dar zoom no mapa.
+              ou use <b>"Mapear hotéis em X km"</b> após dar zoom no mapa.
             </span>
           </div>
           <Button

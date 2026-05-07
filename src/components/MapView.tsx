@@ -649,7 +649,7 @@ export function MapView({
           ) : (
             <Search className="w-3.5 h-3.5" />
           )}
-          Buscar hotéis em {radiusKm} km
+          Mapear hotéis em {radiusKm} km
         </button>
       )}
       {origin && !navigationMode && (
