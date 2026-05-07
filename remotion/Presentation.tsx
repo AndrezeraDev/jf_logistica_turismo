@@ -2,6 +2,7 @@ import { AbsoluteFill, Sequence } from 'remotion';
 import { IntroScene } from './scenes/IntroScene';
 import { LoginScene } from './scenes/LoginScene';
 import { MapScene } from './scenes/MapScene';
+import { GuestAssignmentScene } from './scenes/GuestAssignmentScene';
 import { RouteScene } from './scenes/RouteScene';
 import { OutroScene } from './scenes/OutroScene';
 
@@ -13,23 +14,28 @@ export const Presentation: React.FC = () => {
         <IntroScene />
       </Sequence>
 
-      {/* Login: 80-205 (4s) — overlap de 10 frames pra crossfade visual */}
+      {/* Login: 80-205 (4.2s) */}
       <Sequence from={80} durationInFrames={125}>
         <LoginScene />
       </Sequence>
 
-      {/* Map + selecionar hotéis: 195-395 (~6.5s) */}
-      <Sequence from={195} durationInFrames={200}>
+      {/* Map intro: 195-300 (3.5s) — hotéis aparecendo */}
+      <Sequence from={195} durationInFrames={105}>
         <MapScene />
       </Sequence>
 
-      {/* Rota + economia: 385-595 (7s) */}
-      <Sequence from={385} durationInFrames={210}>
+      {/* Atribuir hóspedes: 290-650 (12s) — 5 modais sequenciais (5x70 = 350 + buffer) */}
+      <Sequence from={290} durationInFrames={360}>
+        <GuestAssignmentScene />
+      </Sequence>
+
+      {/* Rota + economia: 640-820 (6s) */}
+      <Sequence from={640} durationInFrames={180}>
         <RouteScene />
       </Sequence>
 
-      {/* Outro: 585-780 (6.5s) */}
-      <Sequence from={585} durationInFrames={195}>
+      {/* Outro: 810-990 (6s) */}
+      <Sequence from={810} durationInFrames={180}>
         <OutroScene />
       </Sequence>
     </AbsoluteFill>
