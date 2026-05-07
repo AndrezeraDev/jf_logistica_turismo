@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Crosshair, MapPin, Sparkles } from 'lucide-react';
 import { Button } from './ui/Button';
@@ -8,24 +7,12 @@ export function WelcomeDialog() {
   const welcomeSeen = useStore((s) => s.welcomeSeen);
   const markWelcomeSeen = useStore((s) => s.markWelcomeSeen);
   const setPickingOrigin = useStore((s) => s.setPickingOrigin);
-  const origin = useStore((s) => s.settings.origin);
-
-  // Se o usuário já tem ponto de partida configurado (sincronizado do Supabase
-  // de outra sessão / dispositivo), não faz sentido pedir de novo.
-  // Marca como "visto" silenciosamente.
-  useEffect(() => {
-    if (origin && !welcomeSeen) {
-      markWelcomeSeen();
-    }
-  }, [origin, welcomeSeen, markWelcomeSeen]);
-
-  // Não renderiza se já tem origem configurada — evita flash do modal antes
-  // do useEffect rodar.
-  const shouldShow = !welcomeSeen && !origin;
+  const setSettings = useStore((s) => s.setSettings);
 
   function pickOrigin() {
-    // Ativa o modo "marcar no mapa" — o MapView captura o próximo click e salva
-    // como settings.origin (com reverse geocode pra label).
+    // Limpa partida + saída antigas pra usuário marcar do zero — não pode aparecer
+    // já preenchido. Origin → MapView encadeia automaticamente pickingDestination.
+    setSettings({ origin: undefined, destination: undefined });
     setPickingOrigin(true);
     markWelcomeSeen();
   }
@@ -36,7 +23,7 @@ export function WelcomeDialog() {
 
   return (
     <AnimatePresence>
-      {shouldShow && (
+      {!welcomeSeen && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

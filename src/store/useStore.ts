@@ -273,7 +273,8 @@ export const useStore = create<State>()(
       // bump pra v3 — agora settings/vehicles vêm do Supabase, não persistimos local.
       name: 'jf-system-v3',
       partialize: (s) => ({
-        welcomeSeen: s.welcomeSeen,
+        // welcomeSeen NÃO é persistido: queremos que o welcome apareça a cada
+        // reload pra usuário re-marcar partida + saída se quiser.
         liveTracking: s.liveTracking,
         theme: s.theme,
         // Persiste a última busca pra sobreviver reload — sem isso, ao recarregar
