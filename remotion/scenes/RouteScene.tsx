@@ -1,13 +1,16 @@
 import { interpolate, spring, useCurrentFrame, useVideoConfig } from 'remotion';
 import { colors, fontStack, glassStyle } from '../theme';
 
-// Pontos da rota (mesmos hotéis com hóspedes da cena anterior)
+// Mesmos 5 hotéis da cena de atribuição.
+// Ordem = nearest-neighbor a partir de ME (950, 580):
+// → Wood Hotel (32px) → Laghetto Borges (67) → Pousada Viena (99) → Glamour Serra (134) → Fioreze Primo (380)
 const ME = { x: 950, y: 580 };
 const STOPS = [
-  { x: 1020, y: 460, name: 'Pousada Viena', guests: 2, order: 1 },
+  { x: 920, y: 590, name: 'Wood Hotel', guests: 5, order: 1 },
   { x: 950, y: 530, name: 'Hotel Laghetto Stilo Borges', guests: 4, order: 2 },
-  { x: 1140, y: 400, name: 'Hotel Glamour da Serra', guests: 3, order: 3 },
-  { x: 760, y: 400, name: 'Hotel Fioreze Primo', guests: 6, order: 4 },
+  { x: 1020, y: 460, name: 'Pousada Viena', guests: 2, order: 3 },
+  { x: 1140, y: 400, name: 'Hotel Glamour da Serra', guests: 3, order: 4 },
+  { x: 760, y: 400, name: 'Hotel Fioreze Primo', guests: 6, order: 5 },
 ];
 
 export const RouteScene: React.FC = () => {
@@ -42,8 +45,8 @@ export const RouteScene: React.FC = () => {
     config: { damping: 16, stiffness: 130 },
   });
 
-  // Valor do contador R$ animado
-  const ecoMoney = interpolate(frame, [140, 180], [0, 87.4], {
+  // Valor do contador R$ animado (calibrado pros 5 hotéis: 20 pax, ~38km)
+  const ecoMoney = interpolate(frame, [140, 180], [0, 116.8], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
@@ -179,9 +182,9 @@ export const RouteScene: React.FC = () => {
           Resumo
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-          <Stat label="Distância" value="32,4 km" />
-          <Stat label="Duração" value="58 min" />
-          <Stat label="Pax" value="15" />
+          <Stat label="Distância" value="38,7 km" />
+          <Stat label="Duração" value="72 min" />
+          <Stat label="Pax" value="20" />
         </div>
 
         {/* Card economia */}
@@ -211,10 +214,10 @@ export const RouteScene: React.FC = () => {
           </div>
           <div style={{ padding: '14px', display: 'grid', gridTemplateColumns: '1fr auto', gap: 8 }}>
             <span style={{ color: colors.ink300, fontSize: 14 }}>⛽ Custo da rota</span>
-            <span style={{ color: colors.ink100, fontWeight: 600 }}>R$ 21,40</span>
+            <span style={{ color: colors.ink100, fontWeight: 600 }}>R$ 25,50</span>
             <span style={{ color: colors.ink400, fontSize: 13 }}>Sem otimização</span>
             <span style={{ color: colors.ink400, fontSize: 13, textDecoration: 'line-through' }}>
-              R$ 108,80
+              R$ 142,30
             </span>
           </div>
           <div
@@ -230,7 +233,7 @@ export const RouteScene: React.FC = () => {
             <div style={{ fontSize: 26, fontWeight: 700, marginTop: 2 }}>
               R$ {ecoMoney.toFixed(2).replace('.', ',')}
             </div>
-            <div style={{ fontSize: 12, marginTop: 2 }}>132,4 km a menos · −80%</div>
+            <div style={{ fontSize: 12, marginTop: 2 }}>153,2 km a menos · −82%</div>
           </div>
         </div>
       </div>

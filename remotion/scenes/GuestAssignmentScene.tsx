@@ -8,21 +8,40 @@ import { MePin } from '../components/MePin';
 import { Cursor } from '../components/Cursor';
 import { GuestModal } from '../components/GuestModal';
 
-const PER_HOTEL = 70; // frames por hotel — ~2.3s
+const PER_HOTEL = 70;
 
 // Sub-tempos dentro de cada hotel
-const T_CURSOR_START = 0;
-const T_CLICK = 12;
+const T_PIN_CLICK = 12;
 const T_MODAL_ENTER_START = 12;
 const T_MODAL_ENTER_END = 24;
-const T_TYPING_START = 26;
+const T_CURSOR_TO_INPUT = 26;
+const T_TYPING_START = 28;
 const T_TYPING_END = 38;
-const T_QUICK_HIGHLIGHT = 32;
-const T_CURSOR_TO_SAVE = 40;
-const T_SAVE_CLICK = 50;
-const T_MODAL_EXIT_START = 50;
-const T_MODAL_EXIT_END = 60;
-const T_PIN_GREEN = 56;
+const T_CURSOR_TO_QUICK = 40;
+const T_QUICK_HIGHLIGHT = 44;
+const T_CURSOR_TO_SAVE = 48;
+const T_SAVE_CLICK = 54;
+const T_MODAL_EXIT_START = 54;
+const T_MODAL_EXIT_END = 64;
+const T_PIN_GREEN = 60;
+
+// Coordenadas REAIS dos elementos do modal (recalculadas pra bater com o layout)
+// Modal: 480px x ~328px, centrado em (960, 540)
+// → top do modal: 376, bottom: 704; left: 720, right: 1200
+const MODAL_INPUT = { x: 960, y: 536 };
+const MODAL_SAVE = { x: 1070, y: 656 };
+// Quick row centrada em y=592, com botões espaçados ~50px e centro do row em x=960
+const quickButtonX = (i: number) => 857 + i * 50;
+const QUICK_ROW_Y = 592;
+
+// Mapa hotel.guests → índice no array [+1, +2, +4, +6, +10]
+const QUICK_INDEX_FOR_GUESTS = (g: number): number => {
+  if (g <= 1) return 0;
+  if (g === 2 || g === 3) return 1;
+  if (g === 4 || g === 5) return 2;
+  if (g >= 6 && g <= 8) return 3;
+  return 4; // 9+
+};
 
 export const GuestAssignmentScene: React.FC = () => {
   const frame = useCurrentFrame();
@@ -30,20 +49,18 @@ export const GuestAssignmentScene: React.FC = () => {
   const targets = ASSIGNMENT_ORDER.map((id) => HOTELS.find((h) => h.id === id)!);
   const totalHotelFrames = PER_HOTEL * targets.length;
 
-  // Quem é o hotel "ativo" agora (qual modal aparece)?
   const activeIdx = Math.min(targets.length - 1, Math.floor(frame / PER_HOTEL));
   const localFrame = frame - activeIdx * PER_HOTEL;
   const activeHotel = targets[activeIdx];
 
-  // Hotéis com guests JÁ assignados (apenas os anteriores ao atual)
-  // O atual fica verde no fim do localFrame
+  // Ids verdes (já assignados ou viraram verde agora)
   const greenIds = new Set<string>();
   targets.forEach((t, i) => {
     if (i < activeIdx) greenIds.add(t.id);
     if (i === activeIdx && localFrame >= T_PIN_GREEN) greenIds.add(t.id);
   });
 
-  // Modal enter/exit progress (do hotel atual)
+  // Modal enter/exit progress
   const enterT = interpolate(
     localFrame,
     [T_MODAL_ENTER_START, T_MODAL_ENTER_END],
@@ -57,7 +74,7 @@ export const GuestAssignmentScene: React.FC = () => {
     { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' },
   );
 
-  // Texto sendo "digitado" no input
+  // Texto sendo digitado
   const targetValue = String(activeHotel.guests);
   const typedChars = Math.max(
     0,
@@ -68,13 +85,10 @@ export const GuestAssignmentScene: React.FC = () => {
   );
   const inputValue = localFrame >= T_TYPING_START ? targetValue.slice(0, typedChars) : '';
 
-  // Quick button highlight (mostra cursor pairando sobre +5/+6/+4 etc)
-  const quickIdx = (() => {
-    if (localFrame < T_TYPING_START || localFrame > T_QUICK_HIGHLIGHT + 4) return undefined;
-    // Mapa de hotel.guests pra índice no array [1,2,4,6,10]
-    const map: Record<number, number> = { 1: 0, 2: 1, 3: 1, 4: 2, 5: 2, 6: 3, 7: 3, 8: 3, 10: 4 };
-    return map[activeHotel.guests];
-  })();
+  // Quick button highlight ativo só durante a janela
+  const quickIdx = QUICK_INDEX_FOR_GUESTS(activeHotel.guests);
+  const quickActive =
+    localFrame >= T_CURSOR_TO_QUICK && localFrame <= T_QUICK_HIGHLIGHT + 4 ? quickIdx : undefined;
 
   // Save button pressed
   const savePressed =
@@ -82,37 +96,53 @@ export const GuestAssignmentScene: React.FC = () => {
       ? 1 - (localFrame - T_SAVE_CLICK) / 6
       : 0;
 
-  // Cursor keyframes (em coords absolutas)
-  const cursorKeyframes = (() => {
-    const baseX = activeHotel.x;
-    const baseY = activeHotel.y;
-    const start = activeIdx * PER_HOTEL;
+  // ===== Keyframes do cursor (TODOS os hotéis em sequência) =====
+  // Sem teleporte entre hotéis: cursor flui de save click → próximo pin
+  const cursorKeyframes = targets.flatMap((hotel, idx) => {
+    const start = idx * PER_HOTEL;
+    const qIdx = QUICK_INDEX_FOR_GUESTS(hotel.guests);
+    const qx = quickButtonX(qIdx);
     return [
-      { frame: start + T_CURSOR_START, x: baseX + 200, y: baseY + 150 },
-      { frame: start + T_CLICK, x: baseX, y: baseY }, // click no pin
-      { frame: start + T_TYPING_START - 2, x: 960, y: 480 }, // input do modal
-      { frame: start + T_QUICK_HIGHLIGHT, x: 880 + (quickIdx ?? 2) * 50, y: 580 }, // quick buttons
-      { frame: start + T_CURSOR_TO_SAVE - 2, x: 1080, y: 640 }, // save btn
-      { frame: start + T_SAVE_CLICK, x: 1080, y: 640 },
-      { frame: start + T_SAVE_CLICK + 10, x: 1080, y: 640 }, // segura
+      // 1) cursor chegando ao pin (com aproximação curva via offset)
+      ...(idx === 0
+        ? [{ frame: start - 12, x: 1700, y: 200 }]
+        : []),
+      { frame: start + T_PIN_CLICK - 8, x: hotel.x + 60, y: hotel.y + 80 }, // approach
+      { frame: start + T_PIN_CLICK, x: hotel.x, y: hotel.y }, // click
+      { frame: start + T_PIN_CLICK + 5, x: hotel.x, y: hotel.y }, // dwell
+      // 2) cursor → input (quando modal já abriu)
+      { frame: start + T_CURSOR_TO_INPUT + 4, x: MODAL_INPUT.x, y: MODAL_INPUT.y },
+      // permanece no input enquanto digita
+      { frame: start + T_TYPING_END, x: MODAL_INPUT.x + 4, y: MODAL_INPUT.y + 2 },
+      // 3) → quick button
+      { frame: start + T_CURSOR_TO_QUICK + 2, x: qx, y: QUICK_ROW_Y },
+      { frame: start + T_QUICK_HIGHLIGHT + 3, x: qx, y: QUICK_ROW_Y },
+      // 4) → save
+      { frame: start + T_CURSOR_TO_SAVE + 4, x: MODAL_SAVE.x, y: MODAL_SAVE.y },
+      { frame: start + T_SAVE_CLICK, x: MODAL_SAVE.x, y: MODAL_SAVE.y }, // click
+      { frame: start + T_SAVE_CLICK + 6, x: MODAL_SAVE.x, y: MODAL_SAVE.y }, // dwell
+      // 5) durante saída do modal, começa a se afastar (sem entrar no próximo pin ainda)
+      ...(idx < targets.length - 1
+        ? [{ frame: start + T_MODAL_EXIT_END, x: MODAL_SAVE.x - 30, y: MODAL_SAVE.y - 20 }]
+        : []),
     ];
-  })();
+  });
 
-  // Para o cursor saltar entre hotéis sem teleportar feio, sobreponho keyframes do
-  // próximo bloco. Pra simplicidade, recomputo só os do hotel atual (Cursor componente
-  // interpola entre frames).
+  // Click frames globais
+  const clickFrames = targets.flatMap((_, idx) => [
+    idx * PER_HOTEL + T_PIN_CLICK,
+    idx * PER_HOTEL + T_SAVE_CLICK,
+  ]);
 
-  // Map background tilt extra durante transições
-  const tiltExtra = Math.sin(frame / 8) * 0.5;
+  // Tilt da câmera (sutil)
+  const tiltExtra = Math.sin(frame / 20) * 0.4;
 
-  // Outro / fade in
   const sceneOpacity = interpolate(frame, [0, 12], [0, 1], { extrapolateRight: 'clamp' });
   const fadeOut = interpolate(frame, [totalHotelFrames - 8, totalHotelFrames], [1, 0], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
 
-  // Title superior — explica o que tá rolando
   const titleOpacity = interpolate(
     frame,
     [10, 25, totalHotelFrames - 30, totalHotelFrames - 10],
@@ -120,7 +150,6 @@ export const GuestAssignmentScene: React.FC = () => {
     { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' },
   );
 
-  // Pin "explosion" quando vira verde
   const greenExplosion = (() => {
     const sinceGreen = localFrame - T_PIN_GREEN;
     if (sinceGreen < 0 || sinceGreen > 18) return 0;
@@ -137,32 +166,27 @@ export const GuestAssignmentScene: React.FC = () => {
         fontFamily: fontStack,
         opacity: sceneOpacity * fadeOut,
         background: colors.bg,
-        transform: `perspective(2400px) rotateX(${tiltExtra * 0.3}deg)`,
+        transform: `perspective(2400px) rotateX(${tiltExtra * 0.2}deg)`,
       }}
     >
       <MapBackground />
       <SidebarPanel hotelsCount={HOTELS.length} withGuests={greenIds.size} />
 
-      {/* Pins dos hotéis */}
+      {/* Pins */}
       {HOTELS.map((h) => {
         const isActive = h.id === activeHotel.id;
         const isGreenNow = greenIds.has(h.id);
-        const pinX = h.x;
-        const pinY = h.y;
         const justTurnedGreen = isActive && greenExplosion > 0;
-        // pin afastado-do-modal escurece um pouco quando modal aberto
         const dimmed = enterT > 0.4 && exitT < 0.5;
-        const pinOpacity = dimmed && !isActive ? 0.5 : 1;
+        const pinOpacity = dimmed && !isActive ? 0.4 : 1;
 
-        // efeito 3D extra no momento do click
         const clickPulse = (() => {
           if (!isActive) return 0;
-          const d = Math.abs(localFrame - T_CLICK);
+          const d = Math.abs(localFrame - T_PIN_CLICK);
           if (d > 8) return 0;
           return 1 - d / 8;
         })();
 
-        // efeito 3D ao virar verde: rotação + glow
         const rotateX = justTurnedGreen ? greenExplosion * 360 : 0;
         const scale = justTurnedGreen
           ? 1 + greenExplosion * 0.6
@@ -174,15 +198,14 @@ export const GuestAssignmentScene: React.FC = () => {
             key={h.id}
             style={{
               position: 'absolute',
-              left: pinX - 22,
-              top: pinY - 22,
+              left: h.x - 22,
+              top: h.y - 22,
               opacity: pinOpacity,
               transform: `scale(${scale})`,
               transformOrigin: 'center center',
               transition: 'opacity 0.4s',
             }}
           >
-            {/* Anel de explosão verde */}
             {ringScale > 0 && (
               <div
                 style={{
@@ -206,24 +229,21 @@ export const GuestAssignmentScene: React.FC = () => {
         );
       })}
 
-      {/* Pin Meu local */}
       <div style={{ position: 'absolute', left: ME.x - 14, top: ME.y - 14 }}>
         <MePin />
       </div>
 
-      {/* Modal sobre tudo */}
       {(enterT > 0 || exitT < 1) && (
         <GuestModal
           hotel={{ name: activeHotel.name, address: activeHotel.address }}
           enterT={enterT}
           exitT={exitT}
           inputValue={inputValue}
-          highlightQuick={quickIdx}
+          highlightQuick={quickActive}
           savePressed={savePressed}
         />
       )}
 
-      {/* Title */}
       <div
         style={{
           position: 'absolute',
@@ -259,10 +279,7 @@ export const GuestAssignmentScene: React.FC = () => {
         </div>
       </div>
 
-      <Cursor
-        keyframes={cursorKeyframes}
-        clickFrames={[activeIdx * PER_HOTEL + T_CLICK, activeIdx * PER_HOTEL + T_SAVE_CLICK]}
-      />
+      <Cursor keyframes={cursorKeyframes} clickFrames={clickFrames} />
     </div>
   );
 };
