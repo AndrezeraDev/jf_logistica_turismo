@@ -123,15 +123,16 @@ export function RoutePanel() {
     }
   }
 
-  // Wipe completo: zera origem, destino, hóspedes em todos os hotéis e
-  // a rota calculada. Força o usuário a refazer a marcação do zero.
+  // Wipe completo: zera origem, destino, hotéis mapeados, cidade selecionada
+  // e a rota calculada. Força o usuário a refazer tudo do zero.
   function clearAll() {
     const ok = window.confirm(
-      'Limpar a rota? Vai apagar a saída, os hóspedes atribuídos e a otimização. Você precisará marcar tudo de novo.',
+      'Limpar a rota? Vai apagar os hotéis mapeados, a saída, os hóspedes e a otimização. Você precisará marcar tudo de novo.',
     );
     if (!ok) return;
     setSettings({ origin: undefined, destination: undefined });
-    setHotels(hotels.map((h) => ({ ...h, guests: 0 })));
+    setHotels([]);
+    useStore.getState().setCity(undefined);
     setRoute(undefined);
     setRouteError(undefined);
     setAiError(undefined);
