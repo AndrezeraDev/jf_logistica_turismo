@@ -746,6 +746,32 @@
         return { color: 'b7b7bf', bg: '1c1c20' };
       }
 
+      // html2canvas não suporta -webkit-background-clip: text, então o gradient
+      // de cor no .accent some na captura. Aplica cor sólida temporariamente
+      // antes de capturar e restaura depois.
+      function applyAccentFallback() {
+        document.querySelectorAll('.accent').forEach((el) => {
+          if (el.dataset.fallbackApplied) return;
+          el.dataset.fallbackApplied = '1';
+          el.style.color = '#66b2ff'; // mais legível que o accent puro no preto
+          el.style.background = 'none';
+          el.style.webkitBackgroundClip = 'unset';
+          el.style.backgroundClip = 'unset';
+          el.style.webkitTextFillColor = '#66b2ff';
+        });
+      }
+      function removeAccentFallback() {
+        document.querySelectorAll('.accent').forEach((el) => {
+          if (!el.dataset.fallbackApplied) return;
+          delete el.dataset.fallbackApplied;
+          el.style.color = '';
+          el.style.background = '';
+          el.style.webkitBackgroundClip = '';
+          el.style.backgroundClip = '';
+          el.style.webkitTextFillColor = '';
+        });
+      }
+
       async function downloadPPTX() {
         const btn = document.getElementById('btnPptx');
         const txt = btn.querySelector('span');
@@ -757,6 +783,9 @@
         const hint = document.getElementById('downloadHint');
         if (actions) actions.style.visibility = 'hidden';
         if (hint) hint.style.visibility = 'hidden';
+
+        // Aplica fallback de cor sólida nos textos com gradient
+        applyAccentFallback();
 
         try {
           const slides = document.querySelectorAll('.slide');
@@ -794,6 +823,7 @@
           console.error(err);
           alert('Erro ao gerar PPTX: ' + (err?.message || err));
         } finally {
+          removeAccentFallback();
           if (actions) actions.style.visibility = '';
           if (hint) hint.style.visibility = '';
           btn.disabled = false;
