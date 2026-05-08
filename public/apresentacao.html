@@ -27,11 +27,17 @@
         box-sizing: border-box;
         margin: 0;
         padding: 0;
+        /* CRÍTICO: força navegador a IMPRIMIR cores/fundos.
+           Sem isso, Chrome/Edge/Firefox descartam backgrounds coloridos
+           no print (a menos que o usuário ative manualmente "Background graphics"). */
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
       }
 
       html,
       body {
-        background: var(--bg);
+        background: var(--bg) !important;
         color: var(--text-1);
         font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display',
           'SF Pro Text', 'Segoe UI', Inter, system-ui, sans-serif;
@@ -472,11 +478,30 @@
         text-decoration: underline;
       }
 
-      /* Esconde tudo da UI ao imprimir */
+      /* Esconde tudo da UI ao imprimir + força fundos escuros */
       @media print {
         .download-btn,
         .download-hint {
           display: none !important;
+        }
+        html,
+        body {
+          background: #0b0b0d !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        .slide {
+          background: #0b0b0d !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        .aurora-blob,
+        .grid-overlay,
+        .image-placeholder,
+        .pill,
+        .text-content h1 .accent {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
         }
       }
     </style>
