@@ -18,6 +18,8 @@ import {
   Moon,
   Activity,
   Flag,
+  Code2,
+  ChevronDown,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from './ui/Button';
@@ -81,6 +83,7 @@ export function SettingsPanel() {
   const [orsKeyVisible, setOrsKeyVisible] = useState(false);
   const [fsqKeyVisible, setFsqKeyVisible] = useState(false);
   const [tomtomKeyVisible, setTomtomKeyVisible] = useState(false);
+  const [devOpen, setDevOpen] = useState(false);
   const [locating, setLocating] = useState(false);
   const [geoError, setGeoError] = useState<string | undefined>();
   const [manualLat, setManualLat] = useState(settings.origin?.lat.toString() ?? '');
@@ -513,6 +516,37 @@ export function SettingsPanel() {
         </div>
       </Card>
 
+      {/* Bloco Dev — agrupa todas as integrações externas (API keys).
+          Colapsado por padrão pra não poluir o painel pra usuário comum.
+          Removed/cleared destas keys já é gateado pelo confirmAdmin. */}
+      <button
+        onClick={() => setDevOpen((o) => !o)}
+        className="w-full glass rounded-2xl p-4 shadow-glass flex items-center gap-3 hover:bg-white/[0.04] transition-colors text-left"
+      >
+        <Code2 className="w-4 h-4 text-ink-400 flex-shrink-0" />
+        <div className="flex-1 min-w-0">
+          <div className="text-[15px] font-semibold text-ink-100">Dev</div>
+          <div className="text-[12px] text-ink-400 mt-0.5">
+            API keys e integrações externas
+          </div>
+        </div>
+        <ChevronDown
+          className={`w-4 h-4 text-ink-400 transition-transform flex-shrink-0 ${
+            devOpen ? 'rotate-180' : ''
+          }`}
+        />
+      </button>
+
+      <AnimatePresence initial={false}>
+        {devOpen && (
+          <motion.div
+            key="dev-block"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.22 }}
+            className="space-y-3 overflow-hidden"
+          >
       <Card
         title="Cobertura de hotéis"
         subtitle="Foursquare como fonte extra (cobre o que falta no OpenStreetMap)"
@@ -736,6 +770,9 @@ export function SettingsPanel() {
           </p>
         </div>
       </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
