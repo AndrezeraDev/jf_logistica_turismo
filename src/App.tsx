@@ -88,14 +88,27 @@ export default function App() {
     if (!settings.origin) setDestPromptDismissed(false);
   }, [settings.origin]);
 
-  // Mostra popup sugerindo marcar saída logo após origem ser definida
-  // (e antes da saída existir, e se ainda não foi dispensado).
-  const showDestPrompt =
+  // Mostra popup sugerindo marcar saída logo após origem ser definida.
+  // Delay de 350ms importante: no mobile, o click/tap que setou a origem
+  // sintetiza um evento click DEPOIS do touchend; se o popup montar imediato,
+  // esse click "fantasma" cai no backdrop e dispensa o popup na hora.
+  // Esperar ~350ms deixa o ghost click dissipar antes do popup aparecer.
+  const [showDestPrompt, setShowDestPrompt] = useState(false);
+  const destPromptCondition =
     !!settings.origin &&
     !settings.destination &&
     !destPromptDismissed &&
     !pickingOrigin &&
     !pickingDestination;
+
+  useEffect(() => {
+    if (!destPromptCondition) {
+      setShowDestPrompt(false);
+      return;
+    }
+    const t = setTimeout(() => setShowDestPrompt(true), 350);
+    return () => clearTimeout(t);
+  }, [destPromptCondition]);
 
   const panelContent = (
     <>
