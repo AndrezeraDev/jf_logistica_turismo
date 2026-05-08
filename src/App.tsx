@@ -211,24 +211,29 @@ export default function App() {
         {panelContent}
       </div>
 
-      {/* Mobile: drawer (gaveta) */}
+      {/* Mobile: drawer (gaveta).
+          IMPORTANTE: pointerEvents nos initial/exit forçam 'none' durante a
+          saída — assim, mesmo que a animação de unmount engasgue por algum
+          motivo (main thread sob pressão, spring travado), o backdrop não
+          bloqueia cliques na tela. Sintoma do bug: app "trava" sem feedback
+          visual após fechar a sidebar no mobile. */}
       <AnimatePresence>
         {drawerOpen && (
           <>
             <motion.div
               key="drawer-backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              initial={{ opacity: 0, pointerEvents: 'none' }}
+              animate={{ opacity: 1, pointerEvents: 'auto' }}
+              exit={{ opacity: 0, pointerEvents: 'none' }}
               transition={{ duration: 0.2 }}
               onClick={() => setDrawerOpen(false)}
               className="fixed inset-0 z-[1100] bg-black/50 backdrop-blur-sm md:hidden"
             />
             <motion.aside
               key="drawer"
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
+              initial={{ x: '-100%', pointerEvents: 'none' }}
+              animate={{ x: 0, pointerEvents: 'auto' }}
+              exit={{ x: '-100%', pointerEvents: 'none' }}
               transition={{ type: 'spring', stiffness: 380, damping: 38 }}
               className="fixed top-0 left-0 bottom-0 z-[1101] flex md:hidden bg-ink-900 border-r border-white/5 shadow-2xl"
               style={{
