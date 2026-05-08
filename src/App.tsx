@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Building2, Crosshair, Plus, Menu, X } from 'lucide-react';
+import { Building2, Crosshair, Plus, Menu, X, Flag } from 'lucide-react';
 import { Sidebar, Tab } from './components/Sidebar';
 import { MapView } from './components/MapView';
 import { CitySearch } from './components/CitySearch';
@@ -27,6 +27,8 @@ export default function App() {
   const [newHotelAt, setNewHotelAt] = useState<{ lat: number; lng: number } | null>(null);
   const drawerOpen = useStore((s) => s.drawerOpen);
   const setDrawerOpen = useStore((s) => s.setDrawerOpen);
+  const settings = useStore((s) => s.settings);
+  const [destPromptDismissed, setDestPromptDismissed] = useState(false);
 
   const hotels = useStore((s) => s.hotels);
   const updateHotelGuests = useStore((s) => s.updateHotelGuests);
@@ -79,6 +81,21 @@ export default function App() {
   useEffect(() => {
     if (pickingOrigin || pickingDestination || addingHotel) setDrawerOpen(false);
   }, [pickingOrigin, pickingDestination, addingHotel]);
+
+  // Quando origem é limpa, reseta o "dispensado" pra que o popup volte a
+  // aparecer se o usuário marcar uma origem nova.
+  useEffect(() => {
+    if (!settings.origin) setDestPromptDismissed(false);
+  }, [settings.origin]);
+
+  // Mostra popup sugerindo marcar saída logo após origem ser definida
+  // (e antes da saída existir, e se ainda não foi dispensado).
+  const showDestPrompt =
+    !!settings.origin &&
+    !settings.destination &&
+    !destPromptDismissed &&
+    !pickingOrigin &&
+    !pickingDestination;
 
   const panelContent = (
     <>
@@ -376,6 +393,66 @@ export default function App() {
       />
 
       <WelcomeDialog />
+
+      {/* Popup pós-origem: sugere marcar saída da cidade.
+          Só aparece se: origem definida + saída ainda não + usuário não dispensou. */}
+      <AnimatePresence>
+        {showDestPrompt && (
+          <>
+            <motion.div
+              key="dest-prompt-backdrop"
+              initial={{ opacity: 0, pointerEvents: 'none' }}
+              animate={{ opacity: 1, pointerEvents: 'auto' }}
+              exit={{ opacity: 0, pointerEvents: 'none' }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setDestPromptDismissed(true)}
+              className="fixed inset-0 z-[1200] bg-black/50 backdrop-blur-sm"
+            />
+            <motion.div
+              key="dest-prompt"
+              initial={{ opacity: 0, scale: 0.94, y: 8, pointerEvents: 'none' }}
+              animate={{ opacity: 1, scale: 1, y: 0, pointerEvents: 'auto' }}
+              exit={{ opacity: 0, scale: 0.94, y: 8, pointerEvents: 'none' }}
+              transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1201] w-[min(92vw,420px)] glass rounded-2xl p-5 shadow-2xl"
+            >
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center flex-shrink-0">
+                  <Flag className="w-5 h-5 text-red-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[15px] font-semibold text-ink-100">
+                    Marcar a saída da cidade?
+                  </div>
+                  <div className="text-[12px] text-ink-400 mt-1 leading-relaxed">
+                    A saída define onde a viagem termina depois de pegar todos os
+                    hóspedes — pode ser um aeroporto, ponto turístico ou saída da
+                    cidade.
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setDestPromptDismissed(true)}
+                  className="flex-1 h-10 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-[13px] text-ink-300 font-medium transition-colors"
+                >
+                  Pular
+                </button>
+                <button
+                  onClick={() => {
+                    setDestPromptDismissed(true);
+                    setPickingDestination(true);
+                  }}
+                  className="flex-1 h-10 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-[13px] text-red-300 font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <Flag className="w-3.5 h-3.5" />
+                  Marcar saída
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
