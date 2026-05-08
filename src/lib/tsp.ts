@@ -117,3 +117,104 @@ export function twoOpt(
 
   return route.map((s, idx) => ({ ...s, order: idx + 1 }));
 }
+
+/**
+ * Brute-force exato sobre todas as permutações dos hotéis.
+ * Garante o ótimo global em distância haversine — ideal pra n pequeno.
+ *
+ * Use quando `hotels.length <= 9`:
+ *   3 stops →     6 permutações (<1ms)
+ *   5 stops →   120 permutações (<1ms)
+ *   8 stops → 40320 permutações (~5ms)
+ *   9 stops → 362880 permutações (~50ms)
+ *  10 stops → 3.6M  permutações  (~500ms — cai pra heurística aqui)
+ *
+ * NN+2-opt pode parar em mínimos locais (especialmente com 3-5 paradas onde
+ * 2-opt não alcança todas as permutações). Brute-force resolve isso.
+ *
+ * Suporta destino opcional (`end`); sem ele, soma só os legs origem→...→último.
+ */
+export function exactOrder(
+  origin: LatLng,
+  hotels: Hotel[],
+  end?: LatLng,
+): RouteStop[] {
+  if (hotels.length === 0) return [];
+  if (hotels.length === 1) {
+    const h = hotels[0];
+    return [
+      {
+        hotelId: h.id,
+        name: h.name,
+        lat: h.lat,
+        lng: h.lng,
+        guests: h.guests,
+        order: 1,
+      },
+    ];
+  }
+
+  const dist = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) =>
+    haversineKm(a, b);
+
+  let bestOrder: number[] = [];
+  let bestTotal = Infinity;
+  const indices = hotels.map((_, i) => i);
+
+  // Permutações in-place via backtracking (Heap's algorithm não é necessário;
+  // este simples swap-back é OK).
+  const arr = indices.slice();
+  function permute(start: number) {
+    if (start === arr.length) {
+      let total = 0;
+      let prev: LatLng = origin;
+      for (const idx of arr) {
+        total += dist(prev, hotels[idx]);
+        prev = { lat: hotels[idx].lat, lng: hotels[idx].lng };
+      }
+      if (end) total += dist(prev, end);
+      if (total < bestTotal) {
+        bestTotal = total;
+        bestOrder = arr.slice();
+      }
+      return;
+    }
+    for (let i = start; i < arr.length; i++) {
+      [arr[start], arr[i]] = [arr[i], arr[start]];
+      permute(start + 1);
+      [arr[start], arr[i]] = [arr[i], arr[start]];
+    }
+  }
+  permute(0);
+
+  return bestOrder.map((idx, i) => {
+    const h = hotels[idx];
+    return {
+      hotelId: h.id,
+      name: h.name,
+      lat: h.lat,
+      lng: h.lng,
+      guests: h.guests,
+      order: i + 1,
+    };
+  });
+}
+
+/**
+ * Estratégia recomendada: ótimo exato pra n pequeno, heurística pra n grande.
+ * Acima de `EXACT_THRESHOLD`, brute-force fica caro demais (10! = 3.6M).
+ */
+const EXACT_THRESHOLD = 9;
+
+export function optimizeOrder(
+  origin: LatLng,
+  hotels: Hotel[],
+  end?: LatLng,
+): RouteStop[] {
+  if (hotels.length <= EXACT_THRESHOLD) {
+    return exactOrder(origin, hotels, end);
+  }
+  // Fallback heurístico: NN + 2-opt
+  const nn = nearestNeighborOrder(origin, hotels);
+  return twoOpt(origin, nn, end);
+}

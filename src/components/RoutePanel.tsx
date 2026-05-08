@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
 import { useStore } from '../store/useStore';
-import { nearestNeighborOrder, nearestNeighborReturn, twoOpt } from '../lib/tsp';
+import { optimizeOrder } from '../lib/tsp';
 import { routeVia } from '../lib/osrm';
 import { suggestWithAI } from '../lib/openai';
 import { calcEconomy, formatBRL } from '../lib/economy';
@@ -57,13 +57,12 @@ export function RoutePanel() {
         : null;
 
       // Modo "viagem one-way": tem destino → rota = origin → pickups → destination.
-      //   Não há leg de retorno; ordem dos pickups otimizada pra minimizar
-      //   distância total considerando o destino como end fixo.
+      //   Ordem dos pickups otimizada pra minimizar a distância total
+      //   considerando o destino como end fixo.
       // Modo clássico: sem destino → origin → pickups → drop-off (return) → origin.
-      const nnStops = nearestNeighborOrder(origin, selected);
-      const stops = dest
-        ? twoOpt(origin, nnStops, dest) // closed path com destino como fim
-        : twoOpt(origin, nnStops); // open path
+      // optimizeOrder usa brute-force exato pra n ≤ 9 (ótimo global garantido)
+      // e cai pra NN+2-opt acima disso.
+      const stops = optimizeOrder(origin, selected, dest ?? undefined);
       const last: LatLng = stops.length
         ? { lat: stops[stops.length - 1].lat, lng: stops[stops.length - 1].lng }
         : origin;
@@ -77,8 +76,16 @@ export function RoutePanel() {
       let returnStops: typeof stops = [];
       let returnPoints: LatLng[] = [];
       if (!dest) {
-        const nnReturn = nearestNeighborReturn(last, stops);
-        returnStops = twoOpt(last, nnReturn, origin);
+        // Drop-off: do último ponto, deixa todos os hóspedes voltando ao origin.
+        // Mesmo conjunto de hotéis, mas começando do último visitado.
+        const returnHotels = stops.map((s) => ({
+          id: s.hotelId,
+          name: s.name,
+          lat: s.lat,
+          lng: s.lng,
+          guests: s.guests,
+        }));
+        returnStops = optimizeOrder(last, returnHotels, origin);
         returnPoints = [
           last,
           ...returnStops.map((s) => ({ lat: s.lat, lng: s.lng })),
