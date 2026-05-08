@@ -527,8 +527,10 @@
         }
       }
     </style>
-    <!-- Biblioteca pra gerar .pptx no browser (~500kb) -->
+    <!-- Bibliotecas pra gerar .pptx no browser -->
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+    <!-- html2canvas: captura cada slide HTML como PNG (visual idêntico) -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script>
       function downloadPDF() {
         const hint = document.getElementById('downloadHint');
@@ -746,8 +748,63 @@
 
       async function downloadPPTX() {
         const btn = document.getElementById('btnPptx');
+        const txt = btn.querySelector('span');
         btn.disabled = true;
-        btn.querySelector('span').textContent = 'Gerando...';
+        txt.textContent = 'Capturando slides...';
+
+        // Esconde controles flutuantes durante a captura
+        const actions = document.querySelector('.download-actions');
+        const hint = document.getElementById('downloadHint');
+        if (actions) actions.style.visibility = 'hidden';
+        if (hint) hint.style.visibility = 'hidden';
+
+        try {
+          const slides = document.querySelectorAll('.slide');
+          const pres = new PptxGenJS();
+          // Layout custom A4 landscape (mesma proporção do HTML print)
+          pres.defineLayout({ name: 'A4_LAND', width: 11.69, height: 8.27 });
+          pres.layout = 'A4_LAND';
+          pres.author = 'JE Hoffmann Turismo';
+          pres.title = 'JE Hoffmann · Apresentação';
+          pres.company = 'JE Hoffmann Turismo';
+
+          for (let i = 0; i < slides.length; i++) {
+            txt.textContent = `Capturando ${i + 1} / ${slides.length}…`;
+            const slideEl = slides[i];
+            // Renderiza o slide como canvas em 2x (retina) — fidelidade visual total
+            const canvas = await html2canvas(slideEl, {
+              backgroundColor: '#0b0b0d',
+              scale: 2,
+              logging: false,
+              useCORS: true,
+              allowTaint: true,
+              windowWidth: slideEl.offsetWidth,
+              windowHeight: slideEl.offsetHeight,
+            });
+            const dataURL = canvas.toDataURL('image/png');
+            const pSlide = pres.addSlide();
+            // imagem ocupa toda a área do slide
+            pSlide.addImage({ data: dataURL, x: 0, y: 0, w: 11.69, h: 8.27 });
+          }
+
+          txt.textContent = 'Empacotando PPTX...';
+          await pres.writeFile({ fileName: 'JE_Hoffmann_Apresentacao.pptx' });
+          return; // sucesso
+        } catch (err) {
+          console.error(err);
+          alert('Erro ao gerar PPTX: ' + (err?.message || err));
+        } finally {
+          if (actions) actions.style.visibility = '';
+          if (hint) hint.style.visibility = '';
+          btn.disabled = false;
+          txt.textContent = 'Baixar PPTX';
+        }
+      }
+
+      // Código programático antigo (mantido como referência apenas)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      function _legacyDownloadPPTX_unused() {
+        const btn = { disabled: false, querySelector: () => ({ textContent: '' }) };
         try {
           const pres = new PptxGenJS();
           pres.layout = 'LAYOUT_WIDE'; // 13.333 x 7.5"
