@@ -20,6 +20,7 @@ import {
   Flag,
   Code2,
   ChevronDown,
+  Hourglass,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from './ui/Button';
@@ -491,6 +492,46 @@ export function SettingsPanel() {
             />
             Mostrar círculo de alcance no mapa
           </label>
+        </div>
+      </Card>
+
+      <Card
+        title="Tempo por parada"
+        subtitle="Máximo gasto em cada hotel (embarque, espera). Soma na duração total."
+        action={<Hourglass className="w-4 h-4 text-ink-400" />}
+      >
+        <div className="space-y-2.5">
+          <div className="flex items-center gap-3">
+            <input
+              type="range"
+              min={0}
+              max={15}
+              step={1}
+              value={settings.maxStopMinutes ?? 3}
+              onChange={(e) =>
+                setSettings({ maxStopMinutes: parseInt(e.target.value, 10) })
+              }
+              className="flex-1 accent-accent h-1"
+            />
+            <div className="text-[13px] font-mono text-ink-100 min-w-[60px] text-right">
+              {settings.maxStopMinutes ?? 3} min
+            </div>
+          </div>
+          <div className="flex gap-2">
+            {[0, 2, 3, 5, 10].map((n) => (
+              <button
+                key={n}
+                onClick={() => setSettings({ maxStopMinutes: n })}
+                className={`flex-1 h-7 rounded-lg text-[11px] border transition-colors ${
+                  (settings.maxStopMinutes ?? 3) === n
+                    ? 'bg-accent/20 border-accent/40 text-accent'
+                    : 'bg-white/[0.04] border-white/10 text-ink-300 hover:bg-white/[0.08]'
+                }`}
+              >
+                {n === 0 ? 'off' : `${n}m`}
+              </button>
+            ))}
+          </div>
         </div>
       </Card>
 

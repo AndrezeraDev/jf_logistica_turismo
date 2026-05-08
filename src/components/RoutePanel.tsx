@@ -107,6 +107,13 @@ export function RoutePanel() {
             }),
       ]);
 
+      // Tempo de parada (embarque/espera) somado por hotel visitado.
+      // Conta tanto pickups quanto retornos (drop-offs), já que o ônibus
+      // também para pra deixar pessoas. Origin e destination não contam.
+      const stopMin = settings.maxStopMinutes ?? 3;
+      const totalStopsCount = stops.length + returnStops.length;
+      const stopDelayMin = totalStopsCount * stopMin;
+
       const r: Route = {
         origin,
         stops,
@@ -114,7 +121,7 @@ export function RoutePanel() {
         polyline: pickup.polyline,
         returnPolyline: back.polyline,
         totalDistanceKm: pickup.distanceKm + back.distanceKm,
-        totalDurationMin: pickup.durationMin + back.durationMin,
+        totalDurationMin: pickup.durationMin + back.durationMin + stopDelayMin,
         totalGuests,
         suggestedVehicleId: suggestedVehicle?.id,
         usedFallback: pickup.usedFallback || back.usedFallback,

@@ -64,4 +64,5 @@ export interface Settings {
   searchRadiusKm?: number;
   showRadiusCircle?: boolean;
   fuelPricePerLiter?: number; // R$/L
+  maxStopMinutes?: number; // tempo máximo em cada hotel (embarque/espera). Soma na duração total.
 }
