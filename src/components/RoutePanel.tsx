@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Play, Loader2, Sparkles, Navigation, Gauge, Timer, Users, Bus, AlertTriangle, Fuel, TrendingDown } from 'lucide-react';
+import { Play, Loader2, Sparkles, Navigation, Gauge, Timer, Users, Bus, AlertTriangle, Fuel, TrendingDown, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
@@ -13,6 +13,8 @@ import type { Hotel, LatLng, Route } from '../types';
 export function RoutePanel() {
   const hotels = useStore((s) => s.hotels);
   const settings = useStore((s) => s.settings);
+  const setSettings = useStore((s) => s.setSettings);
+  const setHotels = useStore((s) => s.setHotels);
   const vehicles = useStore((s) => s.vehicles);
   const route = useStore((s) => s.route);
   const setRoute = useStore((s) => s.setRoute);
@@ -121,6 +123,20 @@ export function RoutePanel() {
     }
   }
 
+  // Wipe completo: zera origem, destino, hóspedes em todos os hotéis e
+  // a rota calculada. Força o usuário a refazer a marcação do zero.
+  function clearAll() {
+    const ok = window.confirm(
+      'Limpar a rota? Vai apagar a saída, os hóspedes atribuídos e a otimização. Você precisará marcar tudo de novo.',
+    );
+    if (!ok) return;
+    setSettings({ origin: undefined, destination: undefined });
+    setHotels(hotels.map((h) => ({ ...h, guests: 0 })));
+    setRoute(undefined);
+    setRouteError(undefined);
+    setAiError(undefined);
+  }
+
   async function runAI() {
     if (!route) return;
     if (!settings.openaiApiKey) {
@@ -166,17 +182,29 @@ export function RoutePanel() {
             pra evitar fallback em linha reta.
           </div>
         )}
-        <Button
-          variant="primary"
-          size="lg"
-          className="w-full"
-          disabled={!canRun || routeLoading}
-          loading={routeLoading}
-          onClick={run}
-        >
-          {!routeLoading && <Play className="w-4 h-4" fill="currentColor" />}
-          {routeLoading ? 'Calculando rota…' : 'Rodar otimização'}
-        </Button>
+        {route ? (
+          <Button
+            variant="danger"
+            size="lg"
+            className="w-full"
+            onClick={clearAll}
+          >
+            <Trash2 className="w-4 h-4" />
+            Limpar rota
+          </Button>
+        ) : (
+          <Button
+            variant="primary"
+            size="lg"
+            className="w-full"
+            disabled={!canRun || routeLoading}
+            loading={routeLoading}
+            onClick={run}
+          >
+            {!routeLoading && <Play className="w-4 h-4" fill="currentColor" />}
+            {routeLoading ? 'Calculando rota…' : 'Rodar otimização'}
+          </Button>
+        )}
 
         {routeError && (
           <div className="mt-2 text-[11px] text-red-300 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 leading-relaxed">
