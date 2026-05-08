@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>JE Hoffmann Turismo · Apresentação</title>
+    <style>
+      :root {
+        --bg: #0b0b0d;
+        --text-1: #ededef;
+        --text-2: #d9d9de;
+        --text-3: #b7b7bf;
+        --text-4: #8a8a93;
+        --accent: #0a84ff;
+        --accent-2: #0060df;
+        --emerald: #34c759;
+        --red: #ff3b30;
+        --purple: #b450ff;
+        --border: rgba(255, 255, 255, 0.08);
+        --glass: linear-gradient(
+          180deg,
+          rgba(28, 28, 32, 0.78) 0%,
+          rgba(22, 22, 26, 0.68) 100%
+        );
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        background: var(--bg);
+        color: var(--text-1);
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display',
+          'SF Pro Text', 'Segoe UI', Inter, system-ui, sans-serif;
+        letter-spacing: -0.01em;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+
+      .slide {
+        position: relative;
+        width: 297mm;
+        height: 210mm;
+        overflow: hidden;
+        background: var(--bg);
+        page-break-after: always;
+        break-after: page;
+        display: flex;
+        flex-direction: column;
+      }
+      .slide:last-child {
+        page-break-after: auto;
+      }
+
+      /* Aurora background — 3 radial gradients estáticos */
+      .aurora {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      .aurora-blob {
+        position: absolute;
+        border-radius: 50%;
+      }
+      .aurora-1 {
+        top: -20%;
+        left: -15%;
+        width: 60%;
+        height: 90%;
+        background: radial-gradient(
+          closest-side,
+          rgba(10, 132, 255, 0.45),
+          transparent 70%
+        );
+      }
+      .aurora-2 {
+        bottom: -25%;
+        right: -15%;
+        width: 55%;
+        height: 85%;
+        background: radial-gradient(
+          closest-side,
+          rgba(52, 199, 89, 0.28),
+          transparent 70%
+        );
+      }
+      .aurora-3 {
+        top: 25%;
+        right: 25%;
+        width: 35%;
+        height: 50%;
+        background: radial-gradient(
+          closest-side,
+          rgba(180, 80, 255, 0.22),
+          transparent 70%
+        );
+      }
+
+      /* Grid sutil */
+      .grid-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.05;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
+        background-size: 40mm 40mm;
+      }
+
+      /* Header de cada slide */
+      .slide-header {
+        position: relative;
+        z-index: 5;
+        padding: 14mm 20mm 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 4mm;
+      }
+      .brand img {
+        width: 12mm;
+        height: 12mm;
+        border-radius: 50%;
+        box-shadow: 0 4px 12px rgba(10, 132, 255, 0.35);
+      }
+      .brand-text {
+        line-height: 1.1;
+      }
+      .brand-text .title {
+        font-size: 9pt;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        color: var(--text-1);
+      }
+      .brand-text .subtitle {
+        font-size: 7pt;
+        color: var(--text-4);
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+      }
+      .page-number {
+        font-size: 9pt;
+        color: var(--text-4);
+        letter-spacing: 0.2em;
+        font-feature-settings: 'tnum';
+      }
+      .page-number .current {
+        color: var(--text-1);
+        font-weight: 600;
+      }
+
+      /* Conteúdo principal */
+      .slide-body {
+        flex: 1;
+        display: flex;
+        align-items: stretch;
+        gap: 18mm;
+        padding: 8mm 20mm 14mm;
+        position: relative;
+        z-index: 4;
+      }
+      .slide-body.reverse {
+        flex-direction: row-reverse;
+      }
+
+      .image-placeholder {
+        flex: 0 0 110mm;
+        aspect-ratio: 1;
+        align-self: center;
+        background: var(--glass);
+        border: 1.5px dashed rgba(255, 255, 255, 0.18);
+        border-radius: 8mm;
+        position: relative;
+        overflow: hidden;
+        box-shadow:
+          0 1px 0 rgba(255, 255, 255, 0.06) inset,
+          0 12px 40px rgba(0, 0, 0, 0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 3mm;
+        color: var(--text-4);
+      }
+      .image-placeholder .icon {
+        width: 18mm;
+        height: 18mm;
+        border-radius: 50%;
+        background: rgba(10, 132, 255, 0.12);
+        border: 1.5px solid rgba(10, 132, 255, 0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--accent);
+      }
+      .image-placeholder .icon svg {
+        width: 9mm;
+        height: 9mm;
+      }
+      .image-placeholder .label {
+        font-size: 8pt;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--text-3);
+        font-weight: 600;
+      }
+      .image-placeholder .caption {
+        font-size: 12pt;
+        font-weight: 600;
+        color: var(--text-2);
+        text-align: center;
+        padding: 0 8mm;
+        line-height: 1.3;
+      }
+
+      /* Texto */
+      .text-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-width: 0;
+        gap: 4mm;
+      }
+      .eyebrow {
+        font-size: 8pt;
+        letter-spacing: 0.25em;
+        color: var(--accent);
+        text-transform: uppercase;
+        font-weight: 600;
+      }
+      .text-content h1 {
+        font-size: 28pt;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1.05;
+        color: var(--text-1);
+      }
+      .text-content h1 .accent {
+        background: linear-gradient(135deg, var(--accent), var(--purple));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .text-content .lead {
+        font-size: 12pt;
+        color: var(--text-3);
+        line-height: 1.45;
+        max-width: 110mm;
+      }
+      .text-content ul {
+        list-style: none;
+        margin-top: 2mm;
+        display: flex;
+        flex-direction: column;
+        gap: 2.5mm;
+      }
+      .text-content ul li {
+        font-size: 10.5pt;
+        color: var(--text-2);
+        padding-left: 7mm;
+        position: relative;
+        line-height: 1.4;
+      }
+      .text-content ul li::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 1.6mm;
+        width: 2mm;
+        height: 2mm;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 0 1.5mm rgba(10, 132, 255, 0.18);
+      }
+      .text-content ul li strong {
+        color: var(--text-1);
+        font-weight: 600;
+      }
+
+      /* Pill cards (badge) */
+      .pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2mm;
+        margin-top: 3mm;
+      }
+      .pill {
+        font-size: 8.5pt;
+        padding: 2mm 4mm;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--border);
+        color: var(--text-2);
+      }
+      .pill.accent {
+        background: rgba(10, 132, 255, 0.12);
+        border-color: rgba(10, 132, 255, 0.35);
+        color: #66b2ff;
+      }
+      .pill.green {
+        background: rgba(52, 199, 89, 0.12);
+        border-color: rgba(52, 199, 89, 0.35);
+        color: #5dd57c;
+      }
+      .pill.red {
+        background: rgba(255, 59, 48, 0.12);
+        border-color: rgba(255, 59, 48, 0.35);
+        color: #ff7269;
+      }
+      .pill.purple {
+        background: rgba(180, 80, 255, 0.12);
+        border-color: rgba(180, 80, 255, 0.35);
+        color: #d496ff;
+      }
+
+      /* Hero (slide 1) */
+      .hero-slide .slide-body {
+        align-items: center;
+        justify-content: center;
+        gap: 40mm;
+      }
+      .hero-logo {
+        width: 70mm;
+        height: 70mm;
+        border-radius: 50%;
+        box-shadow:
+          0 0 0 4mm rgba(10, 132, 255, 0.10),
+          0 24px 80px rgba(10, 132, 255, 0.55);
+      }
+      .hero-text h1 {
+        font-size: 42pt;
+        line-height: 1;
+      }
+      .hero-text .lead {
+        font-size: 14pt;
+        max-width: 130mm;
+      }
+
+      /* Footer */
+      .slide-footer {
+        position: absolute;
+        bottom: 7mm;
+        left: 20mm;
+        right: 20mm;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 8pt;
+        color: var(--text-4);
+        letter-spacing: 0.05em;
+        z-index: 5;
+      }
+
+      /* Pin demonstrativo */
+      .pin {
+        display: inline-flex;
+        align-items: center;
+        gap: 2mm;
+        font-size: 9.5pt;
+        color: var(--text-2);
+      }
+      .pin .dot {
+        width: 4mm;
+        height: 4mm;
+        border-radius: 50%;
+        background: white;
+        box-sizing: border-box;
+      }
+      .pin .dot.start {
+        border: 1.2mm solid var(--accent);
+        box-shadow: 0 0 0 1mm rgba(10, 132, 255, 0.25);
+      }
+      .pin .dot.end {
+        border: 1.2mm solid var(--red);
+        box-shadow: 0 0 0 1mm rgba(255, 59, 48, 0.25);
+      }
+      .pin .dot.green {
+        background: var(--emerald);
+        border: 0.6mm solid white;
+        box-shadow: 0 2px 6px rgba(52, 199, 89, 0.35);
+      }
+
+      /* TOC dots no slide cover */
+      .cover-meta {
+        display: flex;
+        gap: 6mm;
+        margin-top: 6mm;
+        font-size: 9pt;
+        color: var(--text-4);
+      }
+      .cover-meta strong {
+        color: var(--text-2);
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ====================== SLIDE 1: Capa ====================== -->
+    <section class="slide hero-slide">
+      <div class="aurora">
+        <div class="aurora-blob aurora-1"></div>
+        <div class="aurora-blob aurora-2"></div>
+        <div class="aurora-blob aurora-3"></div>
+      </div>
+      <div class="grid-overlay"></div>
+      <div class="slide-header">
+        <div class="brand">
+          <img src="/logo.png" alt="JE Hoffmann" />
+          <div class="brand-text">
+            <div class="subtitle">Apresentação</div>
+            <div class="title">JE Hoffmann Turismo</div>
+          </div>
+        </div>
+        <div class="page-number"><span class="current">01</span> / 10</div>
+      </div>
+      <div class="slide-body">
+        <img src="/logo.png" alt="JE Hoffmann" class="hero-logo" />
+        <div class="text-content hero-text">
+          <div class="eyebrow">Bem-vindo</div>
+          <h1>Logística<br /><span class="accent">inteligente</span></h1>
+          <p class="lead">
+            Plataforma completa de logística turística — mapeamento automático
+            de hotéis, otimização de rotas, gestão de frota e operação ao vivo
+            com GPS. Tudo em uma interface única, moderna e responsiva.
+          </p>
+          <div class="cover-meta">
+            <span><strong>10</strong> etapas</span>
+            <span>·</span>
+            <span><strong>~5 min</strong> de leitura</span>
+            <span>·</span>
+            <span><strong>Gramado · RS</strong></span>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>JE Hoffmann Turismo</span>
+        <span>Apresentação institucional</span>
+      </div>
+    </section>
+
+    <!-- ====================== SLIDE 2: O que faz ====================== -->
+    <section class="slide">
+      <div class="aurora">
+        <div class="aurora-blob aurora-1"></div>
+        <div class="aurora-blob aurora-2"></div>
+      </div>
+      <div class="grid-overlay"></div>
+      <div class="slide-header">
+        <div class="brand">
+          <img src="/logo.png" alt="JE Hoffmann" />
+          <div class="brand-text">
+            <div class="subtitle">Visão geral</div>
+            <div class="title">O que a plataforma faz</div>
+          </div>
+        </div>
+        <div class="page-number"><span class="current">02</span> / 10</div>
+      </div>
+      <div class="slide-body">
+        <div class="text-content">
+          <div class="eyebrow">Funcionalidades</div>
+          <h1>Tudo que você precisa<br />em um só lugar</h1>
+          <ul>
+            <li><strong>Mapeamento automático</strong> de hotéis via Foursquare + OpenStreetMap (com paginação e dedupe)</li>
+            <li><strong>Otimização de rotas</strong> com algoritmo Nearest Neighbor + 2-opt local search</li>
+            <li><strong>Atribuição de hóspedes</strong> por hotel com modal interativo</li>
+            <li><strong>Sugestão de veículo</strong> da frota baseada em pax</li>
+            <li><strong>Cálculo de economia</strong>: combustível, km e R$ vs. cenário sem otimização</li>
+            <li><strong>Compartilhamento</strong>: WhatsApp, PDF, Google Maps com waypoints</li>
+            <li><strong>Modo navegação ao vivo</strong> com GPS + auto-progresso</li>
+          </ul>
+          <div class="pills">
+            <span class="pill">100% gratuito</span>
+            <span class="pill accent">APIs grátis (OSM, Foursquare, OSRM, ORS)</span>
+            <span class="pill purple">Pode evoluir com APIs pagas</span>
+            <span class="pill green">Google Maps · TomTom · OpenAI</span>
+          </div>
+        </div>
+        <div class="image-placeholder">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12c0 1-.6 1.8-1.5 2.2L12 18l-7.5-3.8C3.6 13.8 3 13 3 12V6l9-4 9 4v6z"/>
+            </svg>
+          </div>
+          <div class="label">Print da tela</div>
+          <div class="caption">Mapa principal com hotéis + sidebar</div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>JE Hoffmann Turismo</span>
+        <span>02 · Visão geral</span>
+      </div>
+    </section>
+
+    <!-- ====================== SLIDE 3: Login ====================== -->
+    <section class="slide">
+      <div class="aurora">
+        <div class="aurora-blob aurora-1"></div>
+        <div class="aurora-blob aurora-3"></div>
+      </div>
+      <div class="grid-overlay"></div>
+      <div class="slide-header">
+        <div class="brand">
+          <img src="/logo.png" alt="JE Hoffmann" />
+          <div class="brand-text">
+            <div class="subtitle">Acesso</div>
+            <div class="title">Tela de login</div>
+          </div>
+        </div>
+        <div class="page-number"><span class="current">03</span> / 10</div>
+      </div>
+      <div class="slide-body reverse">
+        <div class="text-content">
+          <div class="eyebrow">Segurança</div>
+          <h1>Login com<br /><span class="accent">verificação anti-bot</span></h1>
+          <p class="lead">
+            Cada usuário acessa com login + senha próprios. Antes de entrar,
+            uma verificação simples confirma que é um humano (e não um robô
+            automático tentando invadir).
+          </p>
+          <ul>
+            <li><strong>Captcha matemático</strong>: pergunta tipo <em>"3 + 5 = ?"</em>. Bots geralmente não conseguem responder corretamente em massa.</li>
+            <li><strong>Senha criptografada</strong> com bcrypt (hash one-way) — nem nós podemos ler sua senha.</li>
+            <li><strong>Sessão persistente</strong>: você loga uma vez e fica conectado entre sessões e dispositivos.</li>
+            <li><strong>Multi-usuário</strong>: admin pode criar contas para sua equipe na aba "Users".</li>
+          </ul>
+          <div class="pills">
+            <span class="pill green">bcrypt</span>
+            <span class="pill accent">Supabase Auth</span>
+            <span class="pill">RLS por usuário</span>
+          </div>
+        </div>
+        <div class="image-placeholder">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <div class="label">Print da tela</div>
+          <div class="caption">Tela de login com captcha</div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>JE Hoffmann Turismo</span>
+        <span>03 · Acesso</span>
+      </div>
+    </section>
+
+    <!-- ====================== SLIDE 4: Layout inicial ====================== -->
+    <section class="slide">
+      <div class="aurora">
+        <div class="aurora-blob aurora-2"></div>
+        <div class="aurora-blob aurora-3"></div>
+      </div>
+      <div class="grid-overlay"></div>
+      <div class="slide-header">
+        <div class="brand">
+          <img src="/logo.png" alt="JE Hoffmann" />
+          <div class="brand-text">
+            <div class="subtitle">Layout</div>
+            <div class="title">A interface principal</div>
+          </div>
+        </div>
+        <div class="page-number"><span class="current">04</span> / 10</div>
+      </div>
+      <div class="slide-body">
+        <div class="image-placeholder">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+          </div>
+          <div class="label">Print da tela</div>
+          <div class="caption">Sidebar + painel + mapa</div>
+        </div>
+        <div class="text-content">
+          <div class="eyebrow">Sidebar</div>
+          <h1>Tudo navegável<br />em um clique</h1>
+          <ul>
+            <li><strong>🗺️ Rotas</strong> — busca de cidade, atribuição de hóspedes, otimização e card de economia</li>
+            <li><strong>🚌 Frota</strong> — cadastro de veículos com nome, tipo, capacidade e consumo (km/L)</li>
+            <li><strong>👥 Users</strong> (admin) — criar/excluir contas da equipe</li>
+            <li><strong>⚙️ Configurações</strong> — meu local, saída, raio, APIs, tema, combustível</li>
+          </ul>
+          <p class="lead" style="margin-top: 4mm; font-size: 10.5pt;">
+            <strong style="color: var(--text-1);">Mapear hotéis em X km</strong> = busca ATIVA
+            de hotéis no raio configurado, baixando da Foursquare + OSM.
+          </p>
+          <p class="lead" style="font-size: 10.5pt;">
+            <strong style="color: var(--text-1);">Procurar hotéis</strong> (lupa) = filtra a lista JÁ
+            CARREGADA pelo nome — ótimo quando o cliente cita um hotel específico.
+          </p>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>JE Hoffmann Turismo</span>
+        <span>04 · Layout</span>
+      </div>
+    </section>
+
+    <!-- ====================== SLIDE 5: Lógica de montagem da rota ====================== -->
+    <section class="slide">
+      <div class="aurora">
+        <div class="aurora-blob aurora-1"></div>
+        <div class="aurora-blob aurora-2"></div>
+      </div>
+      <div class="grid-overlay"></div>
+      <div class="slide-header">
+        <div class="brand">
+          <img src="/logo.png" alt="JE Hoffmann" />
+          <div class="brand-text">
+            <div class="subtitle">Workflow</div>
+            <div class="title">Montagem da rota</div>
+          </div>
+        </div>
+        <div class="page-number"><span class="current">05</span> / 10</div>
+      </div>
+      <div class="slide-body reverse">
+        <div class="text-content">
+          <div class="eyebrow">Passo a passo</div>
+          <h1>Da busca à<br /><span class="accent">otimização</span></h1>
+          <ul>
+            <li><strong>Passo 1.</strong> Configure o raio de busca em Configurações (1–50 km).</li>
+            <li><strong>Passo 2.</strong> Centralize o mapa onde quer buscar (arrastando).</li>
+            <li><strong>Passo 3.</strong> Clique em <em>"Mapear hotéis em X km"</em> — todos os hotéis são plotados como pins azuis.</li>
+            <li><strong>Passo 4.</strong> Clique em cada pin azul que tem passageiros e digite a quantidade.</li>
+            <li><strong>Passo 5.</strong> O pin vira verde com o número de pax.</li>
+            <li><strong>Passo 6.</strong> Clique em <em>"Rodar otimização"</em>.</li>
+          </ul>
+          <div class="pills">
+            <span class="pin"><span class="dot start"></span> Partida</span>
+            <span class="pin"><span class="dot end"></span> Saída/destino</span>
+            <span class="pin"><span class="dot green"></span> Hotel com pax</span>
+          </div>
+        </div>
+        <div class="image-placeholder">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <circle cx="12" cy="12" r="4"/>
+            </svg>
+          </div>
+          <div class="label">Print da tela</div>
+          <div class="caption">Raio de busca + hotéis selecionados</div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>JE Hoffmann Turismo</span>
+        <span>05 · Workflow</span>
+      </div>
+    </section>
+
+    <!-- ====================== SLIDE 6: O que a otimização faz ====================== -->
+    <section class="slide">
+      <div class="aurora">
+        <div class="aurora-blob aurora-1"></div>
+        <div class="aurora-blob aurora-3"></div>
+      </div>
+      <div class="grid-overlay"></div>
+      <div class="slide-header">
+        <div class="brand">
+          <img src="/logo.png" alt="JE Hoffmann" />
+          <div class="brand-text">
+            <div class="subtitle">Algoritmo</div>
+            <div class="title">A magia por trás</div>
+          </div>
+        </div>
+        <div class="page-number"><span class="current">06</span> / 10</div>
+      </div>
+      <div class="slide-body">
+        <div class="image-placeholder">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+          <div class="label">Print da tela</div>
+          <div class="caption">Rota otimizada + card "Economia"</div>
+        </div>
+        <div class="text-content">
+          <div class="eyebrow">Sob o capô</div>
+          <h1>Algoritmo<br />determinístico</h1>
+          <ul>
+            <li><strong>Nearest Neighbor (NN)</strong> — gera a ordem inicial: do ponto atual sempre vai pro mais próximo.</li>
+            <li><strong>2-opt local search</strong> — refina a rota descruzando "alças" e reduz 5–15% da distância total.</li>
+            <li><strong>Roteamento real</strong> via TomTom (com trânsito) → ORS → OSRM → linha reta como fallback.</li>
+            <li><strong>Card "Economia"</strong> — mostra custo de combustível desta rota vs. uma volta separada por hotel.</li>
+            <li><strong>Veículo sugerido</strong> — menor da frota que comporta os pax (ou o maior se ninguém couber).</li>
+          </ul>
+          <div class="pills">
+            <span class="pill accent">NN + 2-opt</span>
+            <span class="pill green">Trânsito real</span>
+            <span class="pill">Sub-segundos</span>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>JE Hoffmann Turismo</span>
+        <span>06 · Algoritmo</span>
+      </div>
+    </section>
+
+    <!-- ====================== SLIDE 7: Compartilhar ====================== -->
+    <section class="slide">
+      <div class="aurora">
+        <div class="aurora-blob aurora-2"></div>
+        <div class="aurora-blob aurora-3"></div>
+      </div>
+      <div class="grid-overlay"></div>
+      <div class="slide-header">
+        <div class="brand">
+          <img src="/logo.png" alt="JE Hoffmann" />
+          <div class="brand-text">
+            <div class="subtitle">Distribuição</div>
+            <div class="title">Compartilhar rota</div>
+          </div>
+        </div>
+        <div class="page-number"><span class="current">07</span> / 10</div>
+      </div>
+      <div class="slide-body reverse">
+        <div class="text-content">
+          <div class="eyebrow">Distribuição</div>
+          <h1>4 jeitos de<br /><span class="accent">enviar pra equipe</span></h1>
+          <ul>
+            <li><strong>🖨️ Imprimir / PDF</strong> — layout profissional com logo, paradas numeradas e totais. Ideal pra arquivar.</li>
+            <li><strong>📋 Copiar texto</strong> — formatado pro WhatsApp/email (com asteriscos = negrito automático).</li>
+            <li><strong>🗺️ Google Maps</strong> — abre no app do motorista com origem + waypoints + destino na ordem certa.</li>
+            <li><strong>📤 Compartilhar</strong> — share sheet nativo (iOS/Android) — manda pra qualquer app instalado.</li>
+          </ul>
+          <p class="lead" style="margin-top: 3mm;">
+            O motorista clica no link do Google Maps e tem navegação turn-by-turn,
+            com toda a sequência de hotéis carregada e atualização ao vivo do trânsito.
+          </p>
+        </div>
+        <div class="image-placeholder">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+          </div>
+          <div class="label">Print da tela</div>
+          <div class="caption">Modal "Compartilhar rota"</div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>JE Hoffmann Turismo</span>
+        <span>07 · Distribuição</span>
+      </div>
+    </section>
+
+    <!-- ====================== SLIDE 8: Modo navegação ====================== -->
+    <section class="slide">
+      <div class="aurora">
+        <div class="aurora-blob aurora-1"></div>
+        <div class="aurora-blob aurora-2"></div>
+      </div>
+      <div class="grid-overlay"></div>
+      <div class="slide-header">
+        <div class="brand">
+          <img src="/logo.png" alt="JE Hoffmann" />
+          <div class="brand-text">
+            <div class="subtitle">Operação ao vivo</div>
+            <div class="title">Modo navegação</div>
+          </div>
+        </div>
+        <div class="page-number"><span class="current">08</span> / 10</div>
+      </div>
+      <div class="slide-body">
+        <div class="image-placeholder">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+            </svg>
+          </div>
+          <div class="label">Print da tela</div>
+          <div class="caption">HUD de navegação ativo</div>
+        </div>
+        <div class="text-content">
+          <div class="eyebrow">Modo motorista</div>
+          <h1>GPS ativo,<br /><span class="accent">app guiando</span></h1>
+          <ul>
+            <li><strong>Iniciar rota</strong> aparece quando o GPS está ligado nas Configurações.</li>
+            <li><strong>Zoom suave</strong> em você quando inicia — câmera street-level (zoom 17).</li>
+            <li><strong>Mapa segue</strong> sua localização em tempo real via watchPosition.</li>
+            <li><strong>HUD topo</strong>: próxima parada, distância em km/m, contador "3/8".</li>
+            <li><strong>Auto-progresso</strong>: chegou a &lt; 60m da parada → avança índice automaticamente.</li>
+            <li><strong>Encerrar</strong> e <strong>Pular parada</strong> sempre disponíveis.</li>
+          </ul>
+          <div class="pills">
+            <span class="pill green">GPS ao vivo</span>
+            <span class="pill accent">Auto-progresso</span>
+            <span class="pill">±10m de precisão</span>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>JE Hoffmann Turismo</span>
+        <span>08 · Navegação</span>
+      </div>
+    </section>
+
+    <!-- ====================== SLIDE 9: Configurações & Personalização ====================== -->
+    <section class="slide">
+      <div class="aurora">
+        <div class="aurora-blob aurora-1"></div>
+        <div class="aurora-blob aurora-3"></div>
+      </div>
+      <div class="grid-overlay"></div>
+      <div class="slide-header">
+        <div class="brand">
+          <img src="/logo.png" alt="JE Hoffmann" />
+          <div class="brand-text">
+            <div class="subtitle">Personalização</div>
+            <div class="title">Configurações avançadas</div>
+          </div>
+        </div>
+        <div class="page-number"><span class="current">09</span> / 10</div>
+      </div>
+      <div class="slide-body reverse">
+        <div class="text-content">
+          <div class="eyebrow">Personalização</div>
+          <h1>Adapta-se à<br /><span class="accent">sua operação</span></h1>
+          <ul>
+            <li><strong>Tema claro/escuro</strong> — toggle no canto da sidebar.</li>
+            <li><strong>Combustível</strong> — preço R$/L pra cálculo de economia em rota.</li>
+            <li><strong>Frota personalizada</strong> — nome, tipo, capacidade e km/L por veículo.</li>
+            <li><strong>Saída/destino</strong> (bolinha vermelha) — onde a rota termina.</li>
+            <li><strong>APIs opcionais</strong>:
+              <span class="pill" style="margin-left: 2mm;">Foursquare</span>
+              <span class="pill">ORS</span>
+              <span class="pill">TomTom</span>
+              <span class="pill">OpenAI</span>
+            </li>
+            <li><strong>Rastreamento ao vivo</strong> — GPS contínuo, mapa segue você.</li>
+          </ul>
+        </div>
+        <div class="image-placeholder">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </div>
+          <div class="label">Print da tela</div>
+          <div class="caption">Aba "Configurações"</div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>JE Hoffmann Turismo</span>
+        <span>09 · Configurações</span>
+      </div>
+    </section>
+
+    <!-- ====================== SLIDE 10: Resumo + roadmap ====================== -->
+    <section class="slide">
+      <div class="aurora">
+        <div class="aurora-blob aurora-1"></div>
+        <div class="aurora-blob aurora-2"></div>
+        <div class="aurora-blob aurora-3"></div>
+      </div>
+      <div class="grid-overlay"></div>
+      <div class="slide-header">
+        <div class="brand">
+          <img src="/logo.png" alt="JE Hoffmann" />
+          <div class="brand-text">
+            <div class="subtitle">Conclusão</div>
+            <div class="title">JE Hoffmann pronto pra operar</div>
+          </div>
+        </div>
+        <div class="page-number"><span class="current">10</span> / 10</div>
+      </div>
+      <div class="slide-body">
+        <div class="image-placeholder">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </div>
+          <div class="label">Print da tela</div>
+          <div class="caption">Rota completa renderizada</div>
+        </div>
+        <div class="text-content">
+          <div class="eyebrow">Próximos passos</div>
+          <h1>Pronto hoje,<br />escalável <span class="accent">amanhã</span></h1>
+          <ul>
+            <li><strong>Hosting:</strong> Vercel (HTTPS, deploy automático no push)</li>
+            <li><strong>Backend:</strong> Supabase (Postgres + Auth + RLS por usuário)</li>
+            <li><strong>Mobile-first:</strong> drawer responsivo, sem zoom auto, GPS preciso</li>
+            <li><strong>Multi-usuário:</strong> admin cria contas, cada um vê só os próprios dados</li>
+          </ul>
+          <p class="lead" style="margin-top: 3mm; font-size: 11pt;">
+            <strong style="color: var(--text-1);">Roadmap futuro:</strong> integração com CRMs de venda,
+            histórico/analytics de rotas executadas, suporte a múltiplos veículos
+            simultâneos (VRP), app nativo iOS/Android.
+          </p>
+          <div class="pills" style="margin-top: 4mm;">
+            <span class="pill accent">Vercel</span>
+            <span class="pill green">Supabase</span>
+            <span class="pill">React 18</span>
+            <span class="pill">TypeScript</span>
+            <span class="pill">Vite</span>
+            <span class="pill purple">Leaflet</span>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>JE Hoffmann Turismo</span>
+        <span>10 · Conclusão · Obrigado</span>
+      </div>
+    </section>
+  </body>
+</html>
