@@ -159,19 +159,18 @@ export function MapView({
     routeLayerRef.current = L.layerGroup().addTo(map);
 
     // mostra o botão "buscar nesta área" quando o usuário move/zooma o mapa.
-    // Throttle do `move` event com rAF — sem isso, em mobile o drag fica travado
-    // (cada pixel de pan dispara React re-render + recria circle SVG).
+    // Throttle agressivo do `move` event (250ms) — sem isso, com GPS ativo +
+    // pan + radius circle, o app trava em mobile (centena de re-renders/segundo).
     map.on('moveend', () => {
       setShowAreaBtn(map.getZoom() >= 10);
       setCenterTick((t) => t + 1);
     });
-    let rafId = 0;
+    let lastMoveTick = 0;
     map.on('move', () => {
-      if (rafId) return;
-      rafId = requestAnimationFrame(() => {
-        setCenterTick((t) => t + 1);
-        rafId = 0;
-      });
+      const now = performance.now();
+      if (now - lastMoveTick < 250) return; // 4 updates/seg max
+      lastMoveTick = now;
+      setCenterTick((t) => t + 1);
     });
     // atualiza tamanho dos ícones conforme zoom
     map.on('zoomend', () => {

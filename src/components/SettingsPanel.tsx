@@ -25,6 +25,46 @@ import { Input } from './ui/Input';
 import { Card } from './ui/Card';
 import { useStore } from '../store/useStore';
 import { reverseGeocode, searchAddress, AddressHit } from '../lib/nominatim';
+import { confirmAdmin } from '../lib/adminGate';
+
+// Wrapper genérico: pra remover uma config sensível, exige a palavra "admin"
+function clearWithAdmin(
+  action: string,
+  current: string | undefined | null | object,
+  clear: () => void,
+) {
+  if (!current) {
+    clear();
+    return;
+  }
+  if (confirmAdmin(action)) clear();
+}
+
+/**
+ * Cria um onChange pra inputs de API key que detecta tentativa de esvaziamento
+ * em massa (select-all + delete) e gate com a palavra "admin".
+ * Edição incremental (digitar/backspace caractere a caractere) passa livre.
+ */
+function makeSensitiveOnChange(
+  fieldLabel: string,
+  current: string | undefined,
+  setter: (v: string) => void,
+) {
+  return (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    const oldValue = current || '';
+    // Apaga em massa = caiu de >5 chars pra 0 num único change.
+    const isMassDelete = oldValue.length > 5 && newValue.length === 0;
+    if (isMassDelete) {
+      if (!confirmAdmin(`remover a key ${fieldLabel}`)) {
+        // Reverte: força re-render com valor antigo
+        e.target.value = oldValue;
+        return;
+      }
+    }
+    setter(newValue);
+  };
+}
 
 export function SettingsPanel() {
   const settings = useStore((s) => s.settings);
@@ -374,7 +414,11 @@ export function SettingsPanel() {
                   `${settings.destination.lat.toFixed(4)}, ${settings.destination.lng.toFixed(4)}`}
               </span>
               <button
-                onClick={() => setSettings({ destination: undefined })}
+                onClick={() =>
+                  clearWithAdmin('remover a saída', settings.destination, () =>
+                    setSettings({ destination: undefined }),
+                  )
+                }
                 className="text-[11px] text-ink-400 hover:text-red-400"
               >
                 limpar
@@ -481,7 +525,11 @@ export function SettingsPanel() {
               type={fsqKeyVisible ? 'text' : 'password'}
               placeholder="Foursquare Service API key"
               value={settings.foursquareApiKey || ''}
-              onChange={(e) => setSettings({ foursquareApiKey: e.target.value })}
+              onChange={makeSensitiveOnChange(
+                'Foursquare',
+                settings.foursquareApiKey,
+                (v) => setSettings({ foursquareApiKey: v }),
+              )}
               className="pl-9 pr-10 font-mono text-[12px]"
             />
             <button
@@ -526,7 +574,11 @@ export function SettingsPanel() {
               type={orsKeyVisible ? 'text' : 'password'}
               placeholder="OpenRouteService API key"
               value={settings.orsApiKey || ''}
-              onChange={(e) => setSettings({ orsApiKey: e.target.value })}
+              onChange={makeSensitiveOnChange(
+                'OpenRouteService',
+                settings.orsApiKey,
+                (v) => setSettings({ orsApiKey: v }),
+              )}
               className="pl-9 pr-10 font-mono text-[12px]"
             />
             <button
@@ -572,7 +624,11 @@ export function SettingsPanel() {
               type={tomtomKeyVisible ? 'text' : 'password'}
               placeholder="TomTom API key"
               value={settings.tomtomApiKey || ''}
-              onChange={(e) => setSettings({ tomtomApiKey: e.target.value })}
+              onChange={makeSensitiveOnChange(
+                'TomTom',
+                settings.tomtomApiKey,
+                (v) => setSettings({ tomtomApiKey: v }),
+              )}
               className="pl-9 pr-10 font-mono text-[12px]"
             />
             <button
@@ -651,7 +707,11 @@ export function SettingsPanel() {
               type={keyVisible ? 'text' : 'password'}
               placeholder="sk-…"
               value={settings.openaiApiKey || ''}
-              onChange={(e) => setSettings({ openaiApiKey: e.target.value })}
+              onChange={makeSensitiveOnChange(
+                'OpenAI',
+                settings.openaiApiKey,
+                (v) => setSettings({ openaiApiKey: v }),
+              )}
               className="pl-9 pr-10 font-mono text-[12px]"
             />
             <button

@@ -1,5 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { useStore } from '../store/useStore';
+import { haversineKm } from './geo';
+
+// Distância mínima (metros) entre updates pra commitar setSettings.
+// GPS oscila ~3-5m parado — sem isso o app re-renderiza várias vezes por segundo
+// só por jitter, o que pode travar mobile. 5m é um bom balanço.
+const MIN_MOVE_METERS = 5;
 
 /**
  * Enquanto `liveTracking` estiver on, mantém um `watchPosition` ativo:
@@ -14,11 +20,13 @@ export function useLiveLocation() {
   const setLiveError = useStore((s) => s.setLiveError);
   const setLiveTracking = useStore((s) => s.setLiveTracking);
   const firstFixRef = useRef(true);
+  const lastCommittedRef = useRef<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
     if (!liveTracking) {
       setLiveAccuracy(undefined);
       firstFixRef.current = true; // reset pra próxima ativação
+      lastCommittedRef.current = null;
       return;
     }
     if (!('geolocation' in navigator)) {
@@ -40,6 +48,13 @@ export function useLiveLocation() {
 
     const wid = navigator.geolocation.watchPosition(
       (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+
+        // Sempre atualiza accuracy (barato — não dispara cascata)
+        setLiveAccuracy(pos.coords.accuracy);
+        setLiveError(undefined);
+
         // No primeiro fix da sessão, peça pro mapa fazer um flyTo suave.
         // Importante: chamar ANTES de setSettings — assim, quando o efeito
         // do MapView reagir à mudança de origin, requestZoomOnNextLocation
@@ -47,16 +62,17 @@ export function useLiveLocation() {
         if (firstFixRef.current) {
           useStore.getState().requestLocationZoom();
           firstFixRef.current = false;
+        } else if (lastCommittedRef.current) {
+          // Skip update se o usuário praticamente não se moveu — evita
+          // re-renders desnecessários (GPS oscila parado por ~3-5m).
+          const distKm = haversineKm(lastCommittedRef.current, { lat, lng });
+          if (distKm * 1000 < MIN_MOVE_METERS) return;
         }
+
+        lastCommittedRef.current = { lat, lng };
         setSettings({
-          origin: {
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-            label: 'Ao vivo',
-          },
+          origin: { lat, lng, label: 'Ao vivo' },
         });
-        setLiveAccuracy(pos.coords.accuracy);
-        setLiveError(undefined);
       },
       (err) => {
         const msg =
