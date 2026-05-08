@@ -126,6 +126,20 @@ export function MapView({
   const [showAreaBtn, setShowAreaBtn] = useState(false);
   const [centerTick, setCenterTick] = useState(0);
   const [hotelSize, setHotelSize] = useState(() => hotelIconSize(11));
+  // Glow no botão "Mapear hotéis" por 6s após o usuário marcar a saída.
+  // Sinaliza qual é o próximo passo lógico do fluxo.
+  const [glowMapBtn, setGlowMapBtn] = useState(false);
+  const prevDestinationRef = useRef(destination);
+  useEffect(() => {
+    const wasUnset = !prevDestinationRef.current;
+    const isSet = !!destination;
+    prevDestinationRef.current = destination;
+    if (wasUnset && isSet) {
+      setGlowMapBtn(true);
+      const t = setTimeout(() => setGlowMapBtn(false), 6000);
+      return () => clearTimeout(t);
+    }
+  }, [destination]);
 
   // Init map once
   useEffect(() => {
@@ -637,7 +651,9 @@ export function MapView({
         <button
           onClick={fetchAreaHotels}
           disabled={hotelsLoading}
-          className="absolute top-4 right-4 z-[1000] glass rounded-full h-9 px-4 text-[12px] flex items-center gap-2 shadow-glass hover:bg-white/[0.12] transition-colors disabled:opacity-60"
+          className={`absolute top-4 right-4 z-[1000] glass rounded-full h-9 px-4 text-[12px] flex items-center gap-2 shadow-glass hover:bg-white/[0.12] transition-colors disabled:opacity-60 ${
+            glowMapBtn ? 'glow-pulse' : ''
+          }`}
         >
           {hotelsLoading ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
