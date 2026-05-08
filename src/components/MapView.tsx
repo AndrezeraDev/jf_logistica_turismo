@@ -243,8 +243,9 @@ export function MapView({
   }, [hotels, route, hotelSize]);
 
   // Picking origin mode — change cursor + capture next click.
-  // Após salvar origem, encadeia automático com pickingDestination se o usuário
-  // ainda não tem destino configurado (welcome / primeiro setup).
+  // O encadeamento automático pra pickingDestination foi removido: agora um
+  // popup centralizado pergunta ao usuário se ele quer marcar a saída
+  // (App.tsx). Isso dá escolha explícita em vez de forçar o fluxo.
   useEffect(() => {
     const map = mapInst.current;
     if (!map) return;
@@ -267,11 +268,6 @@ export function MapView({
             `${lat.toFixed(4)}, ${lng.toFixed(4)}`,
         },
       });
-      // Chain: se ainda não há destino, pede pra marcar a saída em seguida.
-      if (!useStore.getState().settings.destination) {
-        // pequeno delay pra UI processar o origin antes de mudar o banner
-        setTimeout(() => useStore.getState().setPickingDestination(true), 150);
-      }
     };
     map.on('click', handler);
     return () => {
