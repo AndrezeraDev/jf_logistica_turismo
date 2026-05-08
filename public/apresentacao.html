@@ -405,9 +405,113 @@
         color: var(--text-2);
         font-weight: 600;
       }
+
+      /* Botão de baixar — fica fixo no canto, some na hora de imprimir */
+      .download-btn {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 9999;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 22px;
+        border: 0;
+        cursor: pointer;
+        border-radius: 999px;
+        background: linear-gradient(180deg, #0a84ff 0%, #0060df 100%);
+        color: white;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        box-shadow: 0 10px 30px rgba(10, 132, 255, 0.55);
+        transition: transform 0.15s ease, box-shadow 0.2s ease;
+      }
+      .download-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 36px rgba(10, 132, 255, 0.65);
+      }
+      .download-btn:active {
+        transform: translateY(0);
+      }
+      .download-btn svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .download-hint {
+        position: fixed;
+        bottom: 78px;
+        right: 24px;
+        z-index: 9999;
+        max-width: 280px;
+        padding: 12px 14px;
+        background: linear-gradient(
+          180deg,
+          rgba(28, 28, 32, 0.92) 0%,
+          rgba(22, 22, 26, 0.85) 100%
+        );
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        border-radius: 12px;
+        font-size: 12px;
+        color: var(--text-3);
+        line-height: 1.5;
+        backdrop-filter: blur(12px);
+        box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
+      }
+      .download-hint strong {
+        color: var(--text-1);
+        font-weight: 600;
+      }
+      .download-hint .dismiss {
+        margin-top: 8px;
+        font-size: 11px;
+        color: var(--accent);
+        cursor: pointer;
+        text-decoration: underline;
+      }
+
+      /* Esconde tudo da UI ao imprimir */
+      @media print {
+        .download-btn,
+        .download-hint {
+          display: none !important;
+        }
+      }
     </style>
+    <script>
+      function downloadPDF() {
+        // Esconde a hint antes de imprimir e dispara print do navegador
+        const hint = document.getElementById('downloadHint');
+        if (hint) hint.style.display = 'none';
+        window.print();
+      }
+      function dismissHint() {
+        const hint = document.getElementById('downloadHint');
+        if (hint) hint.style.display = 'none';
+      }
+    </script>
   </head>
   <body>
+    <!-- Hint inicial + botão de download (some na hora de imprimir) -->
+    <div class="download-hint" id="downloadHint">
+      <div>
+        <strong>Pronto pra exportar!</strong> Clique em "Baixar PDF" abaixo, ou
+        use <strong>Ctrl+P</strong> (Cmd+P no Mac).
+      </div>
+      <div>Configure: <strong>Paisagem</strong>, margens "Nenhuma", "Background graphics" ON.</div>
+      <div class="dismiss" onclick="dismissHint()">ok, fechar</div>
+    </div>
+    <button class="download-btn" onclick="downloadPDF()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Baixar PDF
+    </button>
+
     <!-- ====================== SLIDE 1: Capa ====================== -->
     <section class="slide hero-slide">
       <div class="aurora">
