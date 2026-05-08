@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Building2, Crosshair, Plus, Menu, X, Flag } from 'lucide-react';
+import { Button } from './components/ui/Button';
 import { Sidebar, Tab } from './components/Sidebar';
 import { MapView } from './components/MapView';
 import { CitySearch } from './components/CitySearch';
@@ -407,9 +408,9 @@ export default function App() {
 
       <WelcomeDialog />
 
-      {/* Popup pós-origem: sugere marcar saída da cidade.
-          Layout responsivo igual aos outros modais (WelcomeDialog/GuestModal):
-          flex-center no overlay, card interno w-full max-w-md com padding adaptativo. */}
+      {/* Popup pós-origem: marcar saída é OBRIGATÓRIO.
+          Sem botão "Pular" e sem dismiss via backdrop — única saída é clicar
+          em "Marcar saída", que entra em pickingDestination e fecha o popup. */}
       <AnimatePresence>
         {showDestPrompt && (
           <motion.div
@@ -418,7 +419,6 @@ export default function App() {
             animate={{ opacity: 1, pointerEvents: 'auto' }}
             exit={{ opacity: 0, pointerEvents: 'none' }}
             transition={{ duration: 0.2 }}
-            onClick={() => setDestPromptDismissed(true)}
             className="fixed inset-0 z-[1200] flex items-center justify-center p-4 bg-black/55 backdrop-blur-md"
           >
             <motion.div
@@ -426,42 +426,35 @@ export default function App() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 4 }}
               transition={{ duration: 0.22, ease: [0.34, 1.56, 0.64, 1] }}
-              onClick={(e) => e.stopPropagation()}
               className="glass w-full max-w-md rounded-3xl p-5 md:p-6 shadow-glass"
             >
-              <div className="flex items-start gap-3 md:gap-4 mb-4 md:mb-5">
+              <div className="flex items-start gap-3 md:gap-4 mb-5 md:mb-6">
                 <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center flex-shrink-0">
                   <Flag className="w-5 h-5 md:w-6 md:h-6 text-red-400" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-[15px] md:text-[17px] font-semibold text-ink-100 leading-tight">
-                    Marcar a saída da cidade?
+                    Marque a saída da cidade
                   </div>
                   <div className="text-[12px] md:text-[13px] text-ink-400 mt-1.5 leading-relaxed">
                     A saída define onde a viagem termina depois de pegar todos
                     os hóspedes — pode ser um aeroporto, ponto turístico ou
-                    saída da cidade.
+                    saída da cidade. Esse passo é obrigatório.
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col-reverse sm:flex-row gap-2">
-                <button
-                  onClick={() => setDestPromptDismissed(true)}
-                  className="flex-1 h-10 md:h-11 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-[13px] md:text-[14px] text-ink-300 font-medium transition-colors"
-                >
-                  Pular
-                </button>
-                <button
-                  onClick={() => {
-                    setDestPromptDismissed(true);
-                    setPickingDestination(true);
-                  }}
-                  className="flex-1 h-10 md:h-11 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-[13px] md:text-[14px] text-red-300 font-medium transition-colors flex items-center justify-center gap-2"
-                >
-                  <Flag className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                  Marcar saída
-                </button>
-              </div>
+              <Button
+                variant="primary"
+                size="lg"
+                className="w-full"
+                onClick={() => {
+                  setDestPromptDismissed(true);
+                  setPickingDestination(true);
+                }}
+              >
+                <Flag className="w-4 h-4" />
+                Marcar saída
+              </Button>
             </motion.div>
           </motion.div>
         )}
