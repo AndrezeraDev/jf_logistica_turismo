@@ -412,12 +412,17 @@
         font-weight: 600;
       }
 
-      /* Botão de baixar — fica fixo no canto, some na hora de imprimir */
-      .download-btn {
+      /* Container fixo de botões — somem no print */
+      .download-actions {
         position: fixed;
         bottom: 24px;
         right: 24px;
         z-index: 9999;
+        display: flex;
+        gap: 10px;
+        flex-direction: row-reverse;
+      }
+      .download-btn {
         display: inline-flex;
         align-items: center;
         gap: 10px;
@@ -434,12 +439,28 @@
         box-shadow: 0 10px 30px rgba(10, 132, 255, 0.55);
         transition: transform 0.15s ease, box-shadow 0.2s ease;
       }
+      .download-btn.secondary {
+        background: linear-gradient(
+          180deg,
+          rgba(28, 28, 32, 0.92) 0%,
+          rgba(22, 22, 26, 0.85) 100%
+        );
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+      }
       .download-btn:hover {
         transform: translateY(-1px);
         box-shadow: 0 14px 36px rgba(10, 132, 255, 0.65);
       }
+      .download-btn.secondary:hover {
+        box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55);
+      }
       .download-btn:active {
         transform: translateY(0);
+      }
+      .download-btn:disabled {
+        opacity: 0.6;
+        cursor: wait;
       }
       .download-btn svg {
         width: 18px;
@@ -448,10 +469,10 @@
 
       .download-hint {
         position: fixed;
-        bottom: 78px;
+        bottom: 84px;
         right: 24px;
         z-index: 9999;
-        max-width: 280px;
+        max-width: 300px;
         padding: 12px 14px;
         background: linear-gradient(
           180deg,
@@ -480,6 +501,7 @@
 
       /* Esconde tudo da UI ao imprimir + força fundos escuros */
       @media print {
+        .download-actions,
         .download-btn,
         .download-hint {
           display: none !important;
@@ -505,9 +527,10 @@
         }
       }
     </style>
+    <!-- Biblioteca pra gerar .pptx no browser (~500kb) -->
+    <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script>
       function downloadPDF() {
-        // Esconde a hint antes de imprimir e dispara print do navegador
         const hint = document.getElementById('downloadHint');
         if (hint) hint.style.display = 'none';
         window.print();
@@ -516,26 +539,651 @@
         const hint = document.getElementById('downloadHint');
         if (hint) hint.style.display = 'none';
       }
+
+      // ===== Geração de PPTX (PowerPoint nativo, editável) =====
+      const SLIDE_DATA = [
+        {
+          type: 'cover',
+          eyebrow: 'BEM-VINDO',
+          title: 'Logística inteligente',
+          accent: 'inteligente',
+          subtitle:
+            'Plataforma completa de logística turística — mapeamento automático de hotéis, otimização de rotas, gestão de frota e operação ao vivo com GPS. Tudo em uma interface única, moderna e responsiva.',
+          meta: '10 etapas · ~5 min de leitura · Gramado · RS',
+        },
+        {
+          eyebrow: 'FUNCIONALIDADES',
+          title: 'Tudo que você precisa em um só lugar',
+          layout: 'text-image',
+          bullets: [
+            'Mapeamento automático de hotéis via Foursquare + OpenStreetMap',
+            'Otimização de rotas com Nearest Neighbor + 2-opt local search',
+            'Atribuição de hóspedes por hotel com modal interativo',
+            'Sugestão de veículo da frota baseada em pax',
+            'Cálculo de economia: combustível, km e R$ vs cenário sem otimização',
+            'Compartilhamento: WhatsApp, PDF, Google Maps com waypoints',
+            'Modo navegação ao vivo com GPS + auto-progresso',
+          ],
+          pills: [
+            { text: 'Versão demonstrativa', kind: 'accent' },
+            { text: 'Grande potencial de evolução', kind: 'purple' },
+            { text: 'Integrações: Google Maps · TomTom · OpenAI', kind: 'green' },
+          ],
+          note:
+            'Esta é uma versão demo funcional, totalmente operável, construída com APIs livres como base. A arquitetura permite expansão para serviços premium e funcionalidades sob demanda da operação.',
+          placeholder: 'Mapa principal com hotéis + sidebar',
+        },
+        {
+          eyebrow: 'SEGURANÇA',
+          title: 'Login com verificação anti-bot',
+          accent: 'verificação anti-bot',
+          layout: 'image-text',
+          subtitle:
+            'Cada usuário acessa com login + senha próprios. Antes de entrar, uma verificação simples confirma que é um humano (e não um robô tentando invadir).',
+          bullets: [
+            'Captcha matemático: pergunta tipo "3 + 5 = ?". Bots não respondem em massa.',
+            'Senha criptografada com bcrypt (hash one-way) — nem nós podemos ler.',
+            'Sessão persistente: você loga uma vez e fica conectado.',
+            'Multi-usuário: admin pode criar contas para sua equipe.',
+          ],
+          pills: [
+            { text: 'bcrypt', kind: 'green' },
+            { text: 'Supabase Auth', kind: 'accent' },
+            { text: 'RLS por usuário', kind: 'plain' },
+          ],
+          placeholder: 'Tela de login com captcha',
+        },
+        {
+          eyebrow: 'SIDEBAR',
+          title: 'Tudo navegável em um clique',
+          layout: 'text-image',
+          bullets: [
+            '🗺️ Rotas — busca de cidade, atribuição de hóspedes, otimização',
+            '🚌 Frota — cadastro de veículos com nome, tipo, capacidade e km/L',
+            '👥 Users (admin) — criar/excluir contas da equipe',
+            '⚙️ Configurações — meu local, saída, raio, APIs, tema, combustível',
+          ],
+          note:
+            'MAPEAR HOTÉIS EM X KM = busca ATIVA na área visível, baixando da Foursquare + OSM.\n\nPROCURAR HOTÉIS (lupa) = filtra a lista JÁ CARREGADA pelo nome — útil quando o cliente cita um hotel específico.',
+          placeholder: 'Sidebar + painel + mapa',
+        },
+        {
+          eyebrow: 'PASSO A PASSO',
+          title: 'Da busca à otimização',
+          accent: 'otimização',
+          layout: 'image-text',
+          bullets: [
+            'Passo 1. Configure o raio de busca em Configurações (1–50 km)',
+            'Passo 2. Centralize o mapa onde quer buscar (arrastando)',
+            'Passo 3. Clique em "Mapear hotéis em X km" — todos viram pins azuis',
+            'Passo 4. Clique em cada pin azul que tem passageiros e digite a quantidade',
+            'Passo 5. O pin vira verde com o número de pax',
+            'Passo 6. Clique em "Rodar otimização"',
+          ],
+          pills: [
+            { text: 'Pin Partida (azul)', kind: 'accent' },
+            { text: 'Pin Saída (vermelho)', kind: 'red' },
+            { text: 'Pin Hotel com pax (verde)', kind: 'green' },
+          ],
+          placeholder: 'Raio de busca + hotéis selecionados',
+        },
+        {
+          eyebrow: 'SOB O CAPÔ',
+          title: 'Algoritmo determinístico',
+          layout: 'text-image',
+          bullets: [
+            'Nearest Neighbor (NN) — gera ordem inicial: do ponto atual sempre vai pro mais próximo',
+            '2-opt local search — refina descruzando "alças", reduz 5–15% da distância',
+            'Roteamento real via TomTom (com trânsito) → ORS → OSRM → linha reta como fallback',
+            'Card "Economia" — custo de combustível desta rota vs viagem separada por hotel',
+            'Veículo sugerido — menor da frota que comporta os pax',
+          ],
+          pills: [
+            { text: 'NN + 2-opt', kind: 'accent' },
+            { text: 'Trânsito real', kind: 'green' },
+            { text: 'Sub-segundos', kind: 'plain' },
+          ],
+          placeholder: 'Rota otimizada + card "Economia"',
+        },
+        {
+          eyebrow: 'DISTRIBUIÇÃO',
+          title: '4 jeitos de enviar pra equipe',
+          accent: 'enviar pra equipe',
+          layout: 'image-text',
+          bullets: [
+            '🖨️ Imprimir / PDF — layout profissional com logo, paradas numeradas e totais',
+            '📋 Copiar texto — formatado pro WhatsApp/email (asteriscos = negrito automático)',
+            '🗺️ Google Maps — abre no app do motorista com origem + waypoints + destino na ordem',
+            '📤 Compartilhar nativo — share sheet do iOS/Android, manda pra qualquer app',
+          ],
+          note:
+            'O motorista clica no link do Google Maps e tem navegação turn-by-turn, com toda a sequência de hotéis carregada e atualização ao vivo do trânsito.',
+          placeholder: 'Modal "Compartilhar rota"',
+        },
+        {
+          eyebrow: 'MODO MOTORISTA',
+          title: 'GPS ativo, app guiando',
+          accent: 'app guiando',
+          layout: 'text-image',
+          bullets: [
+            'Iniciar rota aparece quando o GPS está ligado',
+            'Zoom suave em você ao iniciar — câmera street-level (zoom 17)',
+            'Mapa segue sua localização em tempo real via watchPosition',
+            'HUD topo: próxima parada, distância em km/m, contador "3/8"',
+            'Auto-progresso: chegou a < 60m da parada → avança índice automático',
+            'Encerrar e Pular parada sempre disponíveis',
+          ],
+          pills: [
+            { text: 'GPS ao vivo', kind: 'green' },
+            { text: 'Auto-progresso', kind: 'accent' },
+            { text: '±10m precisão', kind: 'plain' },
+          ],
+          placeholder: 'HUD de navegação ativo',
+        },
+        {
+          eyebrow: 'PERSONALIZAÇÃO',
+          title: 'Adapta-se à sua operação',
+          accent: 'sua operação',
+          layout: 'image-text',
+          bullets: [
+            'Tema claro/escuro — toggle no canto da sidebar',
+            'Combustível — preço R$/L pra cálculo de economia',
+            'Frota personalizada — nome, tipo, capacidade e km/L por veículo',
+            'Saída/destino (bolinha vermelha) — onde a rota termina',
+            'APIs opcionais: Foursquare · ORS · TomTom · OpenAI',
+            'Rastreamento ao vivo — GPS contínuo, mapa segue você',
+          ],
+          placeholder: 'Aba Configurações',
+        },
+        {
+          eyebrow: 'PRÓXIMOS PASSOS',
+          title: 'Pronto hoje, escalável amanhã',
+          accent: 'amanhã',
+          layout: 'text-image',
+          bullets: [
+            'Hosting: Vercel (HTTPS, deploy automático no push)',
+            'Backend: Supabase (Postgres + Auth + RLS por usuário)',
+            'Mobile-first: drawer responsivo, sem zoom auto, GPS preciso',
+            'Multi-usuário: admin cria contas, cada um vê só os próprios dados',
+          ],
+          note:
+            'Roadmap futuro: histórico/analytics de rotas executadas, suporte a múltiplos veículos simultâneos (VRP), app nativo iOS/Android.',
+          pills: [
+            { text: 'Vercel', kind: 'accent' },
+            { text: 'Supabase', kind: 'green' },
+            { text: 'React 18', kind: 'plain' },
+            { text: 'TypeScript', kind: 'plain' },
+            { text: 'Vite', kind: 'plain' },
+            { text: 'Leaflet', kind: 'purple' },
+          ],
+          placeholder: 'Rota completa renderizada',
+        },
+      ];
+
+      const COLORS = {
+        bg: '0b0b0d',
+        bgGradient: '14141a',
+        text1: 'ededef',
+        text2: 'd9d9de',
+        text3: 'b7b7bf',
+        text4: '8a8a93',
+        accent: '0a84ff',
+        accentDark: '0060df',
+        green: '34c759',
+        red: 'ff3b30',
+        purple: 'b450ff',
+        border: '262629',
+        glassBg: '1c1c20',
+      };
+
+      function pillFill(kind) {
+        if (kind === 'accent') return { color: '66b2ff', bg: '0a2540' };
+        if (kind === 'green') return { color: '5dd57c', bg: '0e2e1c' };
+        if (kind === 'red') return { color: 'ff7269', bg: '2c1010' };
+        if (kind === 'purple') return { color: 'd496ff', bg: '24123a' };
+        return { color: 'b7b7bf', bg: '1c1c20' };
+      }
+
+      async function downloadPPTX() {
+        const btn = document.getElementById('btnPptx');
+        btn.disabled = true;
+        btn.querySelector('span').textContent = 'Gerando...';
+        try {
+          const pres = new PptxGenJS();
+          pres.layout = 'LAYOUT_WIDE'; // 13.333 x 7.5"
+          pres.author = 'JE Hoffmann Turismo';
+          pres.title = 'JE Hoffmann · Apresentação';
+          pres.company = 'JE Hoffmann Turismo';
+
+          // Master slide com background dark + aurora "fake" (shapes coloridas blur)
+          pres.defineSlideMaster({
+            title: 'JE_DARK',
+            background: { color: COLORS.bg },
+            objects: [
+              // Aurora azul (top-left)
+              {
+                rect: {
+                  x: -2,
+                  y: -1,
+                  w: 7,
+                  h: 6,
+                  options: {
+                    fill: { type: 'solid', color: COLORS.accent, transparency: 75 },
+                    line: { type: 'none' },
+                  },
+                },
+              },
+              // Aurora verde (bottom-right)
+              {
+                rect: {
+                  x: 8,
+                  y: 4,
+                  w: 7,
+                  h: 5,
+                  options: {
+                    fill: { type: 'solid', color: COLORS.green, transparency: 85 },
+                    line: { type: 'none' },
+                  },
+                },
+              },
+              // Aurora roxa (top-right)
+              {
+                rect: {
+                  x: 8,
+                  y: -1,
+                  w: 5,
+                  h: 4,
+                  options: {
+                    fill: { type: 'solid', color: COLORS.purple, transparency: 88 },
+                    line: { type: 'none' },
+                  },
+                },
+              },
+              // Faixa vinheta no fundo
+              {
+                rect: {
+                  x: 0,
+                  y: 0,
+                  w: 13.333,
+                  h: 7.5,
+                  options: {
+                    fill: { type: 'solid', color: '000000', transparency: 70 },
+                    line: { type: 'none' },
+                  },
+                },
+              },
+            ],
+          });
+
+          // Helper pra adicionar header consistente em cada slide
+          function addHeader(slide, page) {
+            slide.addText('JE HOFFMANN', {
+              x: 0.5,
+              y: 0.35,
+              w: 4,
+              h: 0.3,
+              fontSize: 9,
+              fontFace: 'Arial',
+              color: COLORS.text4,
+              charSpacing: 3,
+              bold: true,
+            });
+            slide.addText('Apresentação institucional', {
+              x: 0.5,
+              y: 0.55,
+              w: 5,
+              h: 0.3,
+              fontSize: 12,
+              fontFace: 'Arial',
+              color: COLORS.text1,
+              bold: true,
+            });
+            slide.addText(`${String(page).padStart(2, '0')} / 10`, {
+              x: 11.5,
+              y: 0.45,
+              w: 1.4,
+              h: 0.3,
+              fontSize: 9,
+              fontFace: 'Arial',
+              color: COLORS.text4,
+              align: 'right',
+              charSpacing: 4,
+            });
+          }
+
+          function addFooter(slide, label) {
+            slide.addText('JE Hoffmann Turismo', {
+              x: 0.5,
+              y: 7.1,
+              w: 5,
+              h: 0.25,
+              fontSize: 8,
+              fontFace: 'Arial',
+              color: COLORS.text4,
+            });
+            slide.addText(label, {
+              x: 7,
+              y: 7.1,
+              w: 5.8,
+              h: 0.25,
+              fontSize: 8,
+              fontFace: 'Arial',
+              color: COLORS.text4,
+              align: 'right',
+            });
+          }
+
+          function addPlaceholder(slide, x, y, w, h, caption) {
+            slide.addShape(pres.ShapeType.roundRect, {
+              x,
+              y,
+              w,
+              h,
+              fill: { color: COLORS.glassBg, transparency: 30 },
+              line: { color: COLORS.border, width: 1.5, dashType: 'dash' },
+              rectRadius: 0.2,
+            });
+            slide.addText('📷  INSERIR PRINT', {
+              x,
+              y: y + h / 2 - 0.45,
+              w,
+              h: 0.4,
+              fontSize: 11,
+              fontFace: 'Arial',
+              color: COLORS.text3,
+              align: 'center',
+              bold: true,
+              charSpacing: 4,
+            });
+            slide.addText(caption, {
+              x: x + 0.3,
+              y: y + h / 2 + 0.05,
+              w: w - 0.6,
+              h: 0.5,
+              fontSize: 12,
+              fontFace: 'Arial',
+              color: COLORS.text2,
+              align: 'center',
+              italic: true,
+            });
+          }
+
+          function addPills(slide, x, y, w, pills) {
+            // pillSpacing: pills horizontalmente, wrap quando passa do w
+            let curX = x;
+            let curY = y;
+            const lineHeight = 0.42;
+            const padX = 0.22;
+            for (const p of pills) {
+              const fill = pillFill(p.kind);
+              const charW = 0.085;
+              const pillW = Math.min(p.text.length * charW + padX * 2, w - 0.1);
+              if (curX + pillW > x + w) {
+                curX = x;
+                curY += lineHeight + 0.12;
+              }
+              slide.addShape(pres.ShapeType.roundRect, {
+                x: curX,
+                y: curY,
+                w: pillW,
+                h: lineHeight,
+                fill: { color: fill.bg },
+                line: { type: 'none' },
+                rectRadius: 0.21,
+              });
+              slide.addText(p.text, {
+                x: curX,
+                y: curY,
+                w: pillW,
+                h: lineHeight,
+                fontSize: 9,
+                fontFace: 'Arial',
+                color: fill.color,
+                align: 'center',
+                valign: 'middle',
+                bold: true,
+              });
+              curX += pillW + 0.12;
+            }
+          }
+
+          // ===== Renderiza cada slide =====
+          SLIDE_DATA.forEach((data, idx) => {
+            const page = idx + 1;
+            const slide = pres.addSlide({ masterName: 'JE_DARK' });
+            addHeader(slide, page);
+
+            if (data.type === 'cover') {
+              // Logo placeholder à esquerda
+              slide.addShape(pres.ShapeType.ellipse, {
+                x: 1.5,
+                y: 2.2,
+                w: 3.2,
+                h: 3.2,
+                fill: {
+                  type: 'gradient',
+                  color1: COLORS.accent,
+                  color2: COLORS.accentDark,
+                },
+                line: { color: COLORS.accent, width: 0 },
+                shadow: {
+                  type: 'outer',
+                  blur: 40,
+                  offset: 8,
+                  angle: 90,
+                  color: COLORS.accent,
+                  opacity: 0.55,
+                },
+              });
+              slide.addText('JE', {
+                x: 1.5,
+                y: 2.2,
+                w: 3.2,
+                h: 3.2,
+                fontSize: 80,
+                fontFace: 'Arial',
+                color: 'ffffff',
+                bold: true,
+                align: 'center',
+                valign: 'middle',
+              });
+              // Texto à direita
+              slide.addText(data.eyebrow, {
+                x: 5.7,
+                y: 2.6,
+                w: 6,
+                h: 0.4,
+                fontSize: 11,
+                fontFace: 'Arial',
+                color: COLORS.accent,
+                charSpacing: 6,
+                bold: true,
+              });
+              slide.addText(
+                [
+                  { text: 'Logística\n', options: { bold: true, color: COLORS.text1 } },
+                  { text: 'inteligente', options: { bold: true, color: COLORS.accent } },
+                ],
+                {
+                  x: 5.7,
+                  y: 3.0,
+                  w: 6.5,
+                  h: 1.6,
+                  fontSize: 44,
+                  fontFace: 'Arial',
+                  charSpacing: -1.5,
+                  paraSpaceBefore: 0,
+                },
+              );
+              slide.addText(data.subtitle, {
+                x: 5.7,
+                y: 4.7,
+                w: 6.5,
+                h: 1.4,
+                fontSize: 13,
+                fontFace: 'Arial',
+                color: COLORS.text3,
+              });
+              slide.addText(data.meta, {
+                x: 5.7,
+                y: 6.0,
+                w: 6.5,
+                h: 0.4,
+                fontSize: 10,
+                fontFace: 'Arial',
+                color: COLORS.text4,
+              });
+            } else {
+              // Layout normal: alternativo image-text vs text-image
+              const isImageLeft = data.layout === 'image-text';
+              const imgX = isImageLeft ? 0.7 : 7.4;
+              const txtX = isImageLeft ? 6.2 : 0.7;
+              const txtW = 5.5;
+
+              addPlaceholder(slide, imgX, 1.6, 5.2, 5.2, data.placeholder);
+
+              // Eyebrow
+              slide.addText(data.eyebrow, {
+                x: txtX,
+                y: 1.5,
+                w: txtW,
+                h: 0.35,
+                fontSize: 10,
+                fontFace: 'Arial',
+                color: COLORS.accent,
+                charSpacing: 6,
+                bold: true,
+              });
+              // Título com accent destacado
+              if (data.accent) {
+                const beforeAccent = data.title.split(data.accent)[0];
+                const afterAccent = data.title.split(data.accent)[1] || '';
+                slide.addText(
+                  [
+                    { text: beforeAccent, options: { color: COLORS.text1, bold: true } },
+                    { text: data.accent, options: { color: COLORS.accent, bold: true } },
+                    { text: afterAccent, options: { color: COLORS.text1, bold: true } },
+                  ],
+                  {
+                    x: txtX,
+                    y: 1.85,
+                    w: txtW,
+                    h: 1.0,
+                    fontSize: 28,
+                    fontFace: 'Arial',
+                    charSpacing: -1,
+                  },
+                );
+              } else {
+                slide.addText(data.title, {
+                  x: txtX,
+                  y: 1.85,
+                  w: txtW,
+                  h: 1.0,
+                  fontSize: 28,
+                  fontFace: 'Arial',
+                  color: COLORS.text1,
+                  bold: true,
+                  charSpacing: -1,
+                });
+              }
+              // Subtitle (se houver)
+              let curY = 2.95;
+              if (data.subtitle) {
+                slide.addText(data.subtitle, {
+                  x: txtX,
+                  y: curY,
+                  w: txtW,
+                  h: 0.7,
+                  fontSize: 11,
+                  fontFace: 'Arial',
+                  color: COLORS.text3,
+                });
+                curY += 0.7;
+              }
+              // Bullets
+              if (data.bullets?.length) {
+                slide.addText(
+                  data.bullets.map((b) => ({
+                    text: b,
+                    options: { bullet: { type: 'bullet', code: '25CF' } },
+                  })),
+                  {
+                    x: txtX,
+                    y: curY,
+                    w: txtW,
+                    h: 2.5,
+                    fontSize: 11,
+                    fontFace: 'Arial',
+                    color: COLORS.text2,
+                    paraSpaceAfter: 4,
+                  },
+                );
+                curY += 0.35 * data.bullets.length + 0.1;
+              }
+              // Note (parágrafo extra)
+              if (data.note) {
+                slide.addText(data.note, {
+                  x: txtX,
+                  y: curY,
+                  w: txtW,
+                  h: 0.8,
+                  fontSize: 10,
+                  fontFace: 'Arial',
+                  color: COLORS.text4,
+                  italic: true,
+                });
+                curY += 0.7;
+              }
+              // Pills
+              if (data.pills?.length) {
+                addPills(slide, txtX, Math.min(curY + 0.05, 6.4), txtW, data.pills);
+              }
+            }
+
+            addFooter(slide, `${String(page).padStart(2, '0')} · ${data.eyebrow}`);
+          });
+
+          await pres.writeFile({ fileName: 'JE_Hoffmann_Apresentacao.pptx' });
+        } catch (err) {
+          console.error(err);
+          alert('Erro ao gerar PPTX: ' + (err?.message || err));
+        } finally {
+          btn.disabled = false;
+          btn.querySelector('span').textContent = 'Baixar PPTX';
+        }
+      }
     </script>
   </head>
   <body>
-    <!-- Hint inicial + botão de download (some na hora de imprimir) -->
+    <!-- Hint inicial + botões de download (somem no print) -->
     <div class="download-hint" id="downloadHint">
       <div>
-        <strong>Pronto pra exportar!</strong> Clique em "Baixar PDF" abaixo, ou
-        use <strong>Ctrl+P</strong> (Cmd+P no Mac).
+        <strong>Pronto pra exportar!</strong> Escolha o formato:
       </div>
-      <div>Configure: <strong>Paisagem</strong>, margens "Nenhuma", "Background graphics" ON.</div>
+      <div style="margin-top:6px">
+        <strong>PDF</strong>: visual idêntico, ideal pra apresentar do zero.<br/>
+        <strong>PPTX</strong>: PowerPoint editável, dá pra mexer texto/cores.
+      </div>
       <div class="dismiss" onclick="dismissHint()">ok, fechar</div>
     </div>
-    <button class="download-btn" onclick="downloadPDF()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-        <polyline points="7 10 12 15 17 10"/>
-        <line x1="12" y1="15" x2="12" y2="3"/>
-      </svg>
-      Baixar PDF
-    </button>
+    <div class="download-actions">
+      <button class="download-btn" onclick="downloadPDF()" title="Salvar como PDF">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        <span>Baixar PDF</span>
+      </button>
+      <button class="download-btn secondary" id="btnPptx" onclick="downloadPPTX()" title="Baixar PowerPoint">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="3"/>
+          <path d="M9 17V7h3.5a2.5 2.5 0 0 1 0 5H9"/>
+        </svg>
+        <span>Baixar PPTX</span>
+      </button>
+    </div>
 
     <!-- ====================== SLIDE 1: Capa ====================== -->
     <section class="slide hero-slide">
