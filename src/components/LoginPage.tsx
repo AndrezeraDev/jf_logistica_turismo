@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogIn, Lock, User, AlertCircle, RefreshCw } from 'lucide-react';
+import { LogIn, Lock, User, AlertCircle, RefreshCw, Eye, EyeOff } from 'lucide-react';
 import { supabase, usernameToEmail } from '../lib/supabase';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
@@ -24,6 +24,7 @@ export function LoginPage() {
   const [captcha, setCaptcha] = useState<Captcha>(() => genCaptcha());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPwd, setShowPwd] = useState(false);
 
   function regen() {
     setCaptcha(genCaptcha());
@@ -151,14 +152,28 @@ export function LoginPage() {
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-400" />
             <Input
-              type="password"
+              type={showPwd ? 'text' : 'password'}
               placeholder="Senha"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && submit()}
-              className="pl-9"
+              className="pl-9 pr-10"
               autoComplete="current-password"
             />
+            <button
+              type="button"
+              onClick={() => setShowPwd((v) => !v)}
+              tabIndex={-1}
+              aria-label={showPwd ? 'Ocultar senha' : 'Mostrar senha'}
+              title={showPwd ? 'Ocultar senha' : 'Mostrar senha'}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg flex items-center justify-center text-ink-400 hover:text-ink-100 hover:bg-white/5 transition-colors"
+            >
+              {showPwd ? (
+                <EyeOff className="w-3.5 h-3.5" />
+              ) : (
+                <Eye className="w-3.5 h-3.5" />
+              )}
+            </button>
           </div>
 
           <div className="px-3 py-2.5 rounded-xl bg-white/[0.03] border border-white/8 space-y-2">
